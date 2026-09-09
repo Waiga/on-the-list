@@ -45,7 +45,7 @@ on-the-list register
 ```
 
 **Derived counts.** 1,913 distinct names across the five annexes after folding,
-of which 146 are colour index numbers. 314 of Annex II's 1,758 rows carry an
+of which 147 are colour index numbers. 314 of Annex II's 1,758 rows carry an
 INCI name at all. 38 of the 627 entries in Annexes III to VI yield a
 `Contains …` statement the warning check will look for, giving 35 distinct
 statements. Every one of those is asserted by a test in `tests/test_register.py`

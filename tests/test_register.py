@@ -125,7 +125,8 @@ class TheRegisterIsCleanEnoughToMatchAgainst(unittest.TestCase):
 
     def test_the_colour_index_names_look_like_colour_index_numbers(self):
         names = REGISTER.colour_index_names
-        self.assertGreater(len(names), 100)
+        # Named in docs/corpus-manifest.md. If it moves, that file is stale.
+        self.assertEqual(len(names), 147)
         for name in names:
             self.assertRegex(name, r"^ci \d{5}(?::\d{1,2})?$")
 
