@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+# Corpora and register downloads used for measurement are never committed:
+# Open Beauty Facts is ODbL and cannot be redistributed from an MIT repository.
+*.csv.gz

@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "on-the-list"
+dynamic = ["version"]
+description = "Reads a cosmetic ingredient list and reports what the EU's official annexes say about the ingredients on it."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Waiga Arya" }]
+keywords = ["cosmetics", "inci", "ingredients", "cosing", "labelling", "cli"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Manufacturing",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Text Processing :: Linguistic",
+]
+# Nothing. The offline test only has this package's source to read, and that
+# is only good enough because there is nothing else in the install to read.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Waiga/on-the-list"
+Issues = "https://github.com/Waiga/on-the-list/issues"
+
+[project.scripts]
+on-the-list = "on_the_list.cli:main"
+
+[tool.setuptools]
+packages = ["on_the_list"]
+
+[tool.setuptools.package-data]
+# The vendored annexes. Every one of these is listed in registry_manifest.py
+# with its SHA-256, and a test fails if the two disagree.
+on_the_list = ["data/*.csv"]
+
+# One source of truth for the version, readable without installing.
+[tool.setuptools.dynamic]
+version = { attr = "on_the_list.__version__" }
