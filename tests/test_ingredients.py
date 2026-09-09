@@ -44,6 +44,33 @@ class FindingTheListInsideALabel(unittest.TestCase):
         block, _ = extract("Ingredients: Aqua, Glycerin.\nDirections: apply.")
         self.assertNotIn("apply", block)
 
+    def test_the_next_panel_is_recognised_in_the_other_pack_languages(self):
+        # A European pack prints its panels in every language it sells in, and
+        # an English-only terminator read "Précautions: éviter le contact avec
+        # les yeux" as an ingredient.
+        for panel in (
+            "Précautions: éviter le contact avec les yeux.",
+            "Mode d'emploi: appliquer le matin.",
+            "Anwendung: morgens auftragen.",
+            "Modo de uso: aplicar.",
+            "Avvertenze: evitare il contatto con gli occhi.",
+            "Gebruiksaanwijzing: aanbrengen.",
+            "Advarsel: unngå kontakt med øynene.",
+        ):
+            with self.subTest(panel=panel):
+                block, _ = extract(f"Ingredients: Aqua, Glycerin.\n{panel}")
+                self.assertNotIn(panel.split(":")[1].strip(), block)
+
+    def test_the_same_panel_run_on_from_the_list_inline(self):
+        block, _ = extract("Ingredients: Aqua, Glycerin. Modo de uso: aplicar.")
+        self.assertNotIn("aplicar", block)
+
+    def test_a_panel_word_inside_a_real_name_does_not_cut_the_list(self):
+        # The inline rule needs the colon, because "application", "usage",
+        # "purpose" and "attention" are ordinary enough to appear in a name.
+        block, _ = extract("Ingredients: Aqua, Application Extract, Glycerin.")
+        self.assertIn("Glycerin", block)
+
 
 class TrimmingAPanelThatIsNotAList(unittest.TestCase):
     def test_a_fluoride_content_declaration_is_cut_off(self):

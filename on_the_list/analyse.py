@@ -77,8 +77,9 @@ def analyse(
     headings = ing.component_headings(block) if parsed else []
     if headings:
         limits.append(
-            "This ingredient field is headed in "
-            f"{len(headings)} places -- "
+            "This ingredient field carries "
+            f"{len(headings)} section "
+            f"{'heading' if len(headings) == 1 else 'headings'} -- "
             + ", ".join(f"'{h}'" for h in headings[:4])
             + (" and others" if len(headings) > 4 else "")
             + ". A multi-component pack declares one list per component in the "

@@ -82,7 +82,7 @@ characters. Nothing else is filtered, sorted or sampled. That gives **16,635
 labels**.
 
 The 50-character floor is a real limit on what the measurement proves. A parse
-rate of 16,593 out of 16,635 is partly guaranteed by that selection and is not
+rate of 16,534 out of 16,635 is partly guaranteed by that selection and is not
 an achievement of the parser.
 
 **Reproduce it.**
@@ -117,10 +117,10 @@ reproducible from the corpus above.
 
 | Check | Sample | Method | Wrong |
 |---|---|---|---|
-| prohibited | all 20 Annex II entries behind the 1,074 unconditional findings | each entry's chemical name read against the annex text | 1 entry, 101 findings (9.4%) |
+| prohibited | all 20 Annex II entries behind the 1,068 unconditional findings | each entry's chemical name read against the annex text | 1 entry, 98 findings (9.2%) |
 | colourant-order | 30 findings, `random.Random(11)` over the deduplicated finding list | each read against the label's own printed list | 3 (10%) |
 | repeated-entry | 30 findings, same draw | same | 15 (50%) |
 
 The prohibited audit is exhaustive over entries rather than sampled over
-findings, because 20 entries account for all 1,074 unconditional findings and
+findings, because 20 entries account for all 1,068 unconditional findings and
 reading 20 annex rows settles every one of them.

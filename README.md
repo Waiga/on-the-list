@@ -177,26 +177,26 @@ is at least 50 characters. Nothing else is filtered or sampled.
 |---|---|
 | Records in the export | 64,237 |
 | Labels selected | 16,635 |
-| Labels whose list parsed | 16,593 |
+| Labels whose list parsed | 16,534 |
 | Crashes | 0 |
-| Ingredients parsed | 300,624 |
-| **Annex II matches** | **2,450** on 2,067 labels |
-| — where the annex entry is unconditional | 1,074 on 950 labels |
-| — where the annex entry sets a condition | 1,376 on 1,190 labels |
-| Colourant position | 964 on 642 labels |
-| Repeated entries | 711 on 290 labels |
-| Warning wording not found | 1,168 on 1,025 labels |
-| Considered and not counted | 528 |
-| Labels where the panel contains pack prose | 4,309 (25.9%) |
-| Labels where the field holds more than one list | 1,654 (9.9%) |
+| Ingredients parsed | 297,868 |
+| **Annex II matches** | **2,433** on 2,050 labels |
+| — where the annex entry is unconditional | 1,068 on 944 labels |
+| — where the annex entry sets a condition | 1,365 on 1,179 labels |
+| Colourant position | 962 on 641 labels |
+| Repeated entries | 712 on 291 labels |
+| Warning wording not found | 1,166 on 1,023 labels |
+| Considered and not counted | 522 |
+| Labels where the panel contains pack prose | 4,244 (25.5%) |
+| Labels where the field holds more than one list | 1,631 (9.8%) |
 
 ### How wrong each check is
 
 Hand-audited against the published annex text or the label's own list. These are
 the numbers, not a summary of them.
 
-**prohibited — 9.4% wrong on the unconditional group.** All 20 Annex II entries
-behind the 1,074 unconditional findings were read against the annex text.
+**prohibited — 9.2% wrong on the unconditional group.** All 20 Annex II entries
+behind the 1,068 unconditional findings were read against the annex text.
 Nineteen are correct: Butylphenyl Methylpropional (654 findings), Zinc
 Pyrithione (105), Hydroxyisohexyl 3-Cyclohexene Carboxaldehyde (100),
 Pentasodium Pentetate (65), Ergocalciferol and Cholecalciferol (13), borates
@@ -205,11 +205,11 @@ wrong, and it is the tool's largest single known false positive: **Annex II
 entry 1388 is `Octamethylcyclotetrasiloxane; D4`, and the Commission's own
 identified-ingredients column gives its INCI name as `CYCLOMETHICONE`**.
 Cyclomethicone names a *mixture* of cyclic siloxanes, so a label printing it has
-not said it contains D4. That produced 101 findings. There is no mechanical
+not said it contains D4. That produced 98 findings. There is no mechanical
 signal separating this from a correct match, so it is reported here rather than
 patched around.
 
-The 1,376 conditional findings are counted neither right nor wrong, because an
+The 1,365 conditional findings are counted neither right nor wrong, because an
 ingredient list cannot settle them. They are dominated by three entries whose
 condition no label states: the furocoumarin entry that names ordinary citrus
 oils *"except for normal content in natural essences used"*, petrolatum *"except
@@ -218,8 +218,9 @@ if the full refining history is known"*, and the colourants prohibited only
 wording so a reader can see the condition and decide.
 
 **colourant-order — 3 of 30 wrong.** A random sample of 30 findings, each read
-against the label's own list. All three failures are OCR damage in the source
-record: `ct 42051` and `CI 074260` are colour index numbers a scanner mangled,
+against the label's own list. That audit predates two later parsing fixes; over
+the same 30 records the shipped code still produces all three wrong findings and
+one fewer sound one. All three failures are OCR damage in the source record: `ct 42051` and `CI 074260` are colour index numbers a scanner mangled,
 so the tool counted them as non-colourants sitting after a colourant. The
 underlying weakness is deeper than the sample shows, and it is stated in
 [`docs/limitations.md`](docs/limitations.md): the Regulation *permits* colourants
@@ -237,7 +238,7 @@ ingredient appearing once in each component is not a repeated ingredient.
 
 The tool detects that when the pack prints a heading it can see — `Gel N°1:`,
 `MASQUE:`, a second `Ingredients:` — and then says so and does not run the two
-order-dependent checks. It flagged 1,654 of the 16,635 labels that way. It
+order-dependent checks. It flagged 1,631 of the 16,635 labels that way. It
 cannot detect it when the pack prints no heading, which is most of the time, and
 no heuristic tried here improved that materially without losing real findings.
 
@@ -249,7 +250,7 @@ to publish, and it is 50%.
 **warning-wording — not measured.** Open Beauty Facts carries no field holding
 the text printed on a pack, so every finding in the corpus run is a gap by
 construction and the rate means nothing. What the run does establish is that the
-check fires on the right population: of the 1,168 findings, 690 are
+check fires on the right population: of the 1,166 findings, 690 are
 `Contains sodium fluoride` on fluoride toothpastes, 131
 `Contains sodium monofluorophosphate`, 127 `Contains hydrogen peroxide` on
 developers, 93 `Contains ammonia` on hair colour and 49

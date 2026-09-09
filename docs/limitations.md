@@ -87,8 +87,8 @@ under *considered and not counted*, with the reason, rather than reported.
 **The known false positive.** Annex II entry 1388 is
 `Octamethylcyclotetrasiloxane; D4`, and its identified-ingredients column gives
 `CYCLOMETHICONE`. Cyclomethicone is the INCI name of a *mixture* of cyclic
-siloxanes; a label printing it has not said the product contains D4. 101 of the
-1,074 unconditional findings in the corpus run are this. No mechanical signal
+siloxanes; a label printing it has not said the product contains D4. 98 of the
+1,068 unconditional findings in the corpus run are this. No mechanical signal
 separates it from a correct match, and inventing an exception list for it would
 be tuning the tool against the one corpus it was measured on. It is left in and
 written down.
@@ -134,7 +134,7 @@ once in each component is not a repeated ingredient.
 The tool detects this when the pack prints a heading it can recognise: a short
 label ending in a colon that is not itself an ingredient-list preamble or a
 warning-panel word, or a second `Ingredients:`. When it finds one, it says so
-and does not run either order-dependent check. On the corpus it flagged 1,654 of
+and does not run either order-dependent check. On the corpus it flagged 1,631 of
 16,635 labels that way.
 
 It cannot detect a component boundary the pack does not print, which is the
@@ -192,7 +192,7 @@ the right population, not that it is right.
 
 ## Where a finding can come from bad input rather than a bad label
 
-A quarter of the corpus — 4,309 of 16,635 labels — had at least one parsed
+A quarter of the corpus — 4,244 of 16,635 labels — had at least one parsed
 "ingredient" longer than any INCI name, meaning pack prose ended up inside the
 panel: a warning, a distributor address, a second product's list, a batch code.
 The tool says so in a limits line when it happens, and every count in that

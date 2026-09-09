@@ -29,16 +29,34 @@ _PREAMBLE = re.compile(
     r")\b\s*[:\-–]?\s*"
 )
 
-# Where the list stops, when the text continues into another pack panel.
-_TERMINATOR = re.compile(
-    r"(?im)^\W{0,4}(?:"
+#: Every panel heading that can follow an ingredient list on a pack, in the
+#: languages a European pack is printed in. The non-English forms are not
+#: decoration: an English-only terminator read "Précautions: éviter le contact
+#: avec les yeux" as an ingredient, on a pack that also printed the list in
+#: English. The same list is reused to decide that a colon-terminated heading
+#: is a pack panel rather than a second product's component.
+_PANEL_WORDS = (
     r"directions?|how\s+to\s+use|usage|application|warnings?|caution|"
     r"precautions?|storage|store\s+in|net\s+(?:wt|weight|vol)|"
     r"manufactured\s+(?:by|for)|marketed\s+by|distributed\s+by|made\s+in|"
     r"best\s+before|expiry|use\s+by|customer\s+care|for\s+external\s+use|"
-    r"keep\s+out\s+of\s+reach"
-    r")\b"
+    r"keep\s+out\s+of\s+reach|uses?|purpose|active\s+ingredients?|"
+    r"inactive\s+ingredients?|other\s+information|"
+    # French
+    r"pr[ée]cautions?|mode\s+d.emploi|conseils?\s+d.utilisation|utilisation|"
+    r"attention|fabriqu[ée]\s+(?:par|en)|distribu[ée]\s+par|contenance|"
+    # Spanish and Portuguese
+    r"precauciones|modo\s+de\s+(?:uso|empleo|usar)|advertencias?|"
+    r"conservaci[óo]n|fabricado\s+por|pa[íi]s\s+de\s+origen|"
+    r"advert[êe]ncias?|conserva[çc][ãa]o|"
+    # German, Italian, Dutch, Nordic
+    r"anwendung|hinweise?|warnhinweise?|aufbewahr\w*|"
+    r"hergestellt\s+(?:von|f[üu]r)|modo\s+d.uso|avvertenze|conservare|"
+    r"prodotto\s+da|gebruiksaanwijzing|waarschuwing\w*|bewaren|"
+    r"bruksanvisning|advarsel|oppbevar\w*"
 )
+
+_TERMINATOR = re.compile(r"(?im)^\W{0,4}(?:" + _PANEL_WORDS + r")\b")
 
 # The same panels when they run on inline rather than starting a line.
 #
@@ -52,7 +70,13 @@ _TERMINATOR = re.compile(
 # concentration it carries, not by the word "contains" alone, so an ingredient
 # list that happens to use that word is untouched.
 _INLINE_TERMINATOR = re.compile(
-    r"(?i)\b(?:if\s+swallowed|if\s+in\s+eyes|avoid\s+contact\s+with\s+"
+    # A panel heading with a colon after it, run on from the list rather than
+    # starting a line: "..., Glycerin. Modo de uso: aplicar". The colon is
+    # required, because several of the panel words -- usage, application,
+    # purpose, attention -- are ordinary enough that matching them bare would
+    # cut a list short.
+    r"(?i)(?:^|[.;])\s*(?:" + _PANEL_WORDS + r")\s*:"
+    r"|\b(?:if\s+swallowed|if\s+in\s+eyes|avoid\s+contact\s+with\s+"
     r"(?:the\s+)?eyes|call\s+a?\s*poison|seek\s+medical|discontinue\s+use|"
     r"keep\s+out\s+of\s+reach|for\s+external\s+use\s+only)\b"
     r"|\b(?:contains?|contient|cont[eé]m|contiene|contien[ei]|inneholder|"
@@ -295,9 +319,8 @@ _NOT_A_COMPONENT = re.compile(
     r"sk[lł]adniki|st[oa]f[fn]er|ainesosat|inci|sastojci|ingrediente|"
     r"contains?|contient|cont[ée]m|contiene|enth[äa]lt|inneholder|indeholder|"
     r"may\s+contain|peut\s+contenir|kann\s+enthalten|puede\s+contener|"
-    r"caution|warnings?|directions?|precautions?|precauciones|advertencias|"
-    r"first\s+aid\s+treatment|storage|uses?|purpose|active\s+ingredients?|"
-    r"inactive\s+ingredients?|other\s+information|ph|code\s+fil|fil\s+code"
+    r"first\s+aid\s+treatment|ph|code\s+fil|fil\s+code|"
+    + _PANEL_WORDS +
     r")(?:\s*[/·].*)?$"
 )
 
