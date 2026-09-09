@@ -113,14 +113,19 @@ def analyse(
         considered = []
 
     if not_searched:
-        limits.append(
-            "Some annex entries matched here carry conditions-of-use or "
-            "warning wording in a form this tool does not search for, so they "
-            "were not checked against the pack text:"
+        shown = ", ".join(not_searched[:8])
+        more = (
+            f", and {len(not_searched) - 8} more"
+            if len(not_searched) > 8
+            else ""
         )
-        limits.extend(f"  {line}" for line in not_searched[:5])
-        if len(not_searched) > 5:
-            limits.append(f"  and {len(not_searched) - 5} more like it.")
+        limits.append(
+            f"{len(not_searched)} annex "
+            f"{'entry' if len(not_searched) == 1 else 'entries'} matched here "
+            "attach conditions of use or warning wording in a form this tool "
+            f"does not search for, so they were not checked: {shown}{more}. "
+            "Open the entry to read what it says."
+        )
 
     prose = [i for i in items if ing.looks_like_prose(i)]
     if prose:

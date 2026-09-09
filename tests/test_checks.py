@@ -192,6 +192,27 @@ class MissingWarningWordingIsAGapNotAViolation(unittest.TestCase):
         self.assertIn("wording in full", detail)
 
 
+class WordingThatIsNotSearchedForIsStillReported(unittest.TestCase):
+    """A wording the tool will not look for must not vanish silently.
+
+    It is named compactly. An earlier version printed each entry's full
+    chemical name, which put twenty lines of naphthalenesulphonate above the
+    findings for one lipstick.
+    """
+
+    LIST = "Aqua, CI 16035, CI 14720, CI 15850, CI 19140, Glycerin"
+
+    def test_it_is_counted_and_each_entry_is_named(self):
+        limits = " ".join(run(self.LIST, pack_text="Lipstick").limits)
+        self.assertIn("4 annex entries", limits)
+        self.assertIn("CI 16035 (Annex IV, entry 32)", limits)
+
+    def test_it_is_one_line_not_one_per_entry(self):
+        report = run(self.LIST, pack_text="Lipstick")
+        about = [x for x in report.limits if "does not search for" in x]
+        self.assertEqual(len(about), 1)
+
+
 class CoverageIsReportedAsAbsenceOfRestrictionNotAsIgnorance(unittest.TestCase):
     def test_unrestricted_ingredients_are_counted_not_flagged(self):
         report = run("Aqua, Glycerin, Parfum")

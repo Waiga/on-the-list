@@ -372,11 +372,10 @@ def check_warning_wording(
         if not entry.wording:
             continue
         if not entry.label_phrases:
-            line = (
-                f"{_entry_line(entry)} — attaches conditions of use or warning "
-                f"wording to {match.ingredient.raw}, in a form this tool does "
-                "not search for."
-            )
+            # Named compactly. Printing each entry's full chemical name here
+            # produced twenty lines of naphthalenesulphonate for one lipstick,
+            # which buries the findings above it.
+            line = f"{match.ingredient.raw} ({entry.citation})"
             if line not in not_searched:
                 not_searched.append(line)
             continue
