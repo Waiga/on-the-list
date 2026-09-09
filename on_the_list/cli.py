@@ -221,4 +221,13 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_ERROR
     if result.findings:
         return EXIT_FINDINGS
+    if not any(check.ran for check in result.checks):
+        # Every check was switched off. "Nothing found" would be a lie about a
+        # comparison that never happened, and in a CI job it would be a green
+        # tick over a label nothing looked at.
+        sys.stderr.write(
+            "on-the-list: every check was switched off, so nothing was "
+            "compared.\n"
+        )
+        return EXIT_ERROR
     return EXIT_OK

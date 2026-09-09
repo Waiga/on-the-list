@@ -30,9 +30,11 @@ That rules out, before any code was written:
 
 **"Is that a real INCI name?" is not a check this tool can make.**
 
-It was the obvious first idea. A tool holding 1,913 official ingredient names
-and a printed list looks exactly like a spell-checker for INCI names, and that
-is what a reader will assume it is.
+It was the obvious first idea. A tool holding 1,913 names read out of an
+official register, and a printed list, looks exactly like a spell-checker for
+INCI names, and that is what a reader will assume it is. (They are names as the
+register prints them, from two columns, one of which also holds chemical and
+CAS-style identifiers. It is not a list of 1,913 INCI names.)
 
 It is wrong, and the reason is a property of the source rather than a limitation
 of the implementation. **Annexes II to VI are lists of restricted substances.**
@@ -41,9 +43,12 @@ IV, V and VI the permitted colourants, preservatives and UV filters. There is no
 annex that lists what is *allowed in general*, because in the EU an ingredient
 is allowed unless something restricts it.
 
-The finding that settled it: **Aqua and Glycerin appear in none of the five
-annexes.** The two most common ingredients in cosmetics. They are absent because
-nothing restricts them.
+The finding that settled it: **no entry in any of the five annexes is named Aqua
+or Glycerin.** The two most common ingredients in cosmetics. They are absent
+because nothing restricts them. Both words do occur elsewhere in the text --
+"Glycerin" among the permitted coatings in the Annex VI titanium-dioxide entry,
+"Nitroglycerin" as Annex II entry 253 -- but neither is an entry naming the
+ingredient, which is what a lookup asks.
 
 A validity check built on these annexes would therefore flag almost every
 ingredient of almost every product. Softening it — flagging only "unusual"
@@ -98,8 +103,9 @@ and its last-update date, the annex title, and a spanning group header.
 with `;` and `/`, never a comma. `Identified INGREDIENTS or substances e.g.`
 separates with commas — but chemical names contain commas of their own:
 `N,N-DIETHYL-m-AMINOPHENOL`, `1,3-Bis(hydroxymethyl)-3-thiourea`,
-`PEG-3,2',2'-Di-p-PHENYLENEDIAMINE`. A plain `split(",")` shreds 40 rows and
-puts a substance called `N` into the register.
+`PEG-3,2',2'-Di-p-PHENYLENEDIAMINE`. A plain `split(",")` gives a different
+answer from the parser on 52 rows and leaves a one-character fragment on 38 of
+them, putting a substance called `N` into the register.
 
 The rule adopted: a comma is part of a name when the fragment before it ends in
 a locant — a digit, a prime, or a lone letter — **and** the fragment after it
@@ -114,8 +120,8 @@ field may contain newlines and the annexes use them heavily — a wording cell i
 often ten lines. Feeding `csv.reader` the output of `splitlines()` glues those
 lines together with nothing between them. It reported no error, and it turned
 `Contains selenium disulphide\nAvoid contact with eyes` into one run-on string,
-corrupting six of the thirty-eight extractable warning statements. Every test
-was green.
+leaving 32 of the 38 extractable warning statements, 19 of them running on into
+the sentence after them. Every test was green.
 
 **Names carry typesetting artefacts** from the PDF the annexes are laid out
 from: `ANTHRA- 9,10-QUINONE`, `MEA- SALICYLATE`, `1-ACETOXY-2-METHYLNAPH-THALENE`.
@@ -144,9 +150,11 @@ Four narrowings, each because the alternative was measured and was wrong:
   condition in the Commission's own wording. A lexical scan for *except*,
   *unless*, *when used*, *other than*, *with the exception of*, *only if*,
   *only when*, *provided that* and a bare *if* separates them. The bare *if* is
-  included because all 287 Annex II entries containing one read "…, if it
-  contains > 0,1 % w/w Butadiene". The tool never decides whether a condition is
-  met; it prints the wording.
+  included because all 333 Annex II entries containing one state a condition on
+  composition that a name cannot settle: 149 read "if it contains > 0,1 % w/w
+  Butadiene" and the rest name another impurity, such as entry 613's "Pitch,
+  coal tar-petroleum, if it contains > 0.005 % w/w benzo[a]pyrene". The tool
+  never decides whether a condition is met; it prints the wording.
 - **A nano-only entry whose own INCI names do not say nano is not reported.**
   Annex II entry 1725 is `Styrene/Acrylates copolymer (nano)` beside the
   ordinary INCI name. 421 corpus labels printing the ordinary polymer matched
@@ -238,16 +246,28 @@ rather than an error, and none was visible from the unit tests:
   from the list;
 - `Cl 77492` with a lowercase L;
 - `Styrene / Acrylates Copolymer` split as two synonyms, matching the styrene
-  monomer in Annex II on 21 labels;
+  monomer in Annex II on 35 labels;
+- a bracket holding most of a name -- `Styrene (Acrylate Copolymer)` -- treated
+  as an aside, so what was left matched Annex II while the same substance
+  printed the other way round, `CI 77288 / CHROMIUM`, did not;
+- a leading "Ingredients:" left on the first ingredient of a file handed to
+  `--ingredients`, which is how such files usually start;
+- a printed tolerance, `Glycerin +/- 0.5%`, opening a shade-range block;
+- a quadratic position check: 20,000 colour index numbers took 64 seconds;
+- a colourant found only in Annex II described as "listed in Annex IV";
+- a malformed `--register` directory raising a traceback and exiting 1;
+- `--skip` on every check exiting 0;
+- the Annex III to VI matches never being printed at all, which is the tool's
+  own title.
 - fragment matches against Annex II;
 - a quarter of the corpus having pack prose inside the panel, now reported;
 - a tenth of it holding more than one product's list, now detected where a
   heading exists and used to suppress both order-dependent checks.
 
 Two things the measurement did **not** fix, and which are published rather than
-patched: the Cyclomethicone/D4 false positive (101 findings, 9.4% of the
-unconditional prohibited group), and the repeated-entry check's 50% error rate
-on multi-component packs.
+patched: the Cyclomethicone/D4 false positive (99 findings, 9.3% of the
+unconditional prohibited group), and the repeated-entry check's 53% error rate,
+most of it on fields that hold more than one product's list.
 
 ## What was considered and rejected
 

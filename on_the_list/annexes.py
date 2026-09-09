@@ -48,12 +48,41 @@ _GLOSSARY_SEPARATOR = re.compile(r"[;/]")
 #: Placeholders the Commission uses for "this row has no glossary name".
 _EMPTY = frozenset({"", "-", "--", "n/a", "na"})
 
+#: The words chemistry uses as locants and stereodescriptors, which are spelled
+#: out rather than numbered. They sit in front of a comma exactly as a digit
+#: does: "alpha,alpha-Dimethylbenzyl Alcohol", "trans,trans-Dibenzylideneacetone".
+#: This is a convention, not a list fitted to a corpus, and it is closed.
+_WORD_LOCANTS = (
+    "alpha|beta|gamma|delta|epsilon|omega|cis|trans|syn|anti|endo|exo|"
+    "ortho|meta|para|sym|tert|sec|iso|neo|erythro|threo"
+)
+
 #: A fragment that is a locant rather than a name: a position number, a prime,
-#: or the single letters chemistry uses for a substitution point. Used to decide
-#: whether a comma is a separator or part of a name -- see ``split_identified``.
+#: one of the single letters chemistry uses for a substitution point, or one of
+#: the words above. Used to decide whether a comma is a separator or part of a
+#: name -- see ``split_identified``.
 _LOCANT_TAIL = re.compile(r"(?:\d|')$")
-_LOCANT_WHOLE = re.compile(r"^[A-Za-z]'?$")
+_LOCANT_PIECE = re.compile(r"(?i)^(?:[A-Za-z]'?|\d{1,2}'?|" + _WORD_LOCANTS + r")$")
+#: A fragment that begins as a numeric or single-letter locant continues.
 _LOCANT_HEAD = re.compile(r"^(?:\d|[A-Za-z]'?[-,])")
+#: The same, for the spelled-out locants. Kept separate because it may only
+#: follow another spelled-out locant: allowing it after any digit merged
+#: "CI 40800,beta-Carotene", two names, into one that is neither.
+_WORD_LOCANT_HEAD = re.compile(r"(?i)^(?:" + _WORD_LOCANTS + r")[-,]")
+
+
+def _is_locant_run(fragment: str) -> bool:
+    """Whether every comma-separated piece of ``fragment`` is a locant.
+
+    "N", "1,2" and "alpha,alpha" are; "1,3-BIS-(2" and "HCl" are not. Without
+    this, a third locant broke the merge: "N,N,N-TRIMETHYLGLYCINE,AQUA" split
+    after the second comma and put a substance called "N" in the register --
+    the exact failure the merge exists to prevent, one locant further along.
+    """
+    fragment = fragment.strip()
+    if not fragment:
+        return False
+    return all(_LOCANT_PIECE.match(piece) for piece in fragment.split(","))
 
 
 def split_glossary(value: str) -> list[str]:
@@ -103,8 +132,19 @@ def split_identified(value: str) -> list[str]:
     merged: list[str] = [fragments[0]]
     for fragment in fragments[1:]:
         previous = merged[-1].rstrip()
-        joined = _LOCANT_TAIL.search(previous) or _LOCANT_WHOLE.match(previous)
-        if joined and _LOCANT_HEAD.match(fragment):
+        # Two ways a comma can belong to a name. Either the fragment before it
+        # ends in a digit or a prime and the one after starts as a locant --
+        # "PEG-3,2',2'-Di-p-PHENYLENEDIAMINE". Or the fragment before it is
+        # itself nothing but locants, in which case a spelled-out locant may
+        # follow too, and so may a bare one: splitting
+        # "N,N,N-TRIMETHYLGLYCINE" leaves an "N" in the middle with no hyphen
+        # after it, because the comma went to the split.
+        run = _is_locant_run(previous)
+        joins = _LOCANT_HEAD.match(fragment) or (
+            run
+            and (_WORD_LOCANT_HEAD.match(fragment) or _is_locant_run(fragment))
+        )
+        if (_LOCANT_TAIL.search(previous) or run) and joins:
             merged[-1] = merged[-1] + "," + fragment
         else:
             merged.append(fragment)
@@ -173,9 +213,11 @@ def label_phrases(wording: str) -> tuple[str, ...]:
 #: roughly two thirds of the matches found in a 16,635-label corpus: petrolatum
 #: (refining history), the hair-dye-only colourants, and the furocoumarin entry
 #: that names ordinary citrus oils "except for normal content in natural
-#: essences used". A bare "if" counts too: all 287 Annex II entries containing
-#: one are of the form "Isobutane, if it contains = >0,1% w/w Butadiene" -- a
-#: condition on composition, which a name on a label cannot settle either.
+#: essences used". A bare "if" counts too. 333 Annex II entries carry one, and
+#: every one of them is a condition on composition that a name on a label cannot
+#: settle: 149 read "if it contains > 0,1 % w/w Butadiene", and the rest name a
+#: different impurity -- "Pitch, coal tar-petroleum, if it contains > 0.005 %
+#: w/w benzo[a]pyrene" is entry 613.
 _QUALIFIER = re.compile(
     r"(?i)\b(except(?:\s+if| for| where)?|unless|when used|other than|"
     r"with the exception of|only (?:if|when)|provided that|if)\b"

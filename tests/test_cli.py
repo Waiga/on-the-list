@@ -69,6 +69,56 @@ class ExitCodes(unittest.TestCase):
         self.assertEqual(result.code, EXIT_ERROR)
         self.assertIn("cannot read input", result.stderr)
 
+    def test_switching_off_every_check_is_not_a_pass(self):
+        # "Nothing found" would be a lie about a comparison that never
+        # happened, and in a CI job a green tick over a label with an Annex II
+        # substance printed first.
+        path = write(
+            self.dir, "l.txt", "Ingredients: Aqua, Butylphenyl Methylpropional."
+        )
+        result = Runner(
+            path, "--skip", "prohibited", "--skip", "colourant-order",
+            "--skip", "repeated-entry", "--skip", "warning-wording",
+        )
+        self.assertEqual(result.code, EXIT_ERROR)
+        self.assertIn("every check was switched off", result.stderr)
+
+    def test_a_malformed_register_is_an_error_not_a_traceback(self):
+        # Exit 1 is EXIT_FINDINGS, and the carefully worded message about the
+        # export format having changed was never reached.
+        path = write(self.dir, "l.txt", "Ingredients: Aqua, Glycerin.")
+        bad = self.dir / "bad"
+        bad.mkdir()
+        for annex in ("II", "III", "IV", "V", "VI"):
+            (bad / f"annex_{annex}.csv").write_text(
+                "a\nb\nc\nd\nnot,the,header\n1,2\n", encoding="utf-8"
+            )
+        result = Runner(path, "--register", str(bad))
+        self.assertEqual(result.code, EXIT_ERROR)
+        self.assertIn("export format", result.stderr)
+
+    def test_a_register_of_bytes_is_an_error_not_a_traceback(self):
+        path = write(self.dir, "l.txt", "Ingredients: Aqua, Glycerin.")
+        bad = self.dir / "bytes"
+        bad.mkdir()
+        for annex in ("II", "III", "IV", "V", "VI"):
+            (bad / f"annex_{annex}.csv").write_bytes(b"\xff\xfe\x00\x01" * 50)
+        result = Runner(path, "--register", str(bad))
+        self.assertEqual(result.code, EXIT_ERROR)
+        self.assertIn("not UTF-8", result.stderr)
+
+    def test_the_reason_a_check_did_not_run_is_the_right_reason(self):
+        # With no ingredient list, warning-wording kept "no pack text was
+        # supplied ... Pass --pack-text to run it." on a run where --pack-text
+        # had been supplied. The report told the reader to do what they had
+        # just done.
+        label = write(self.dir, "copy.txt", "A rich cream for dry skin.")
+        pack = write(self.dir, "pack.txt", "Contains sodium fluoride")
+        result = Runner(label, "--pack-text", pack)
+        self.assertEqual(result.code, EXIT_ERROR)
+        self.assertNotIn("no pack text was supplied", result.stdout)
+        self.assertEqual(result.stdout.count("there was no ingredient list"), 4)
+
     def test_a_register_directory_that_holds_no_register(self):
         path = write(self.dir, "clean.txt", "Ingredients: Aqua, Glycerin.")
         empty = self.dir / "empty"
@@ -182,12 +232,28 @@ class Subcommands(unittest.TestCase):
         )
         self.assertIn("api.tech.ec.europa.eu", result.stdout)
 
-    def test_update_register_is_a_separate_command(self):
-        # Not exercised against the network here. What is checked is that the
-        # word only reaches the network path through its own subcommand.
+    def test_analysing_a_label_never_loads_the_network_module(self):
+        """The quarantine, checked by running rather than by reading.
+
+        The previous version of this test asserted that the string
+        "update-register" was in a tuple of subcommand names, which is a
+        constant, and its comment claimed it checked the network path.
+        """
+        import sys
+
+        for name in [n for n in sys.modules if n == "on_the_list.fetch"]:
+            del sys.modules[name]
+        with tempfile.TemporaryDirectory() as directory:
+            path = write(
+                Path(directory), "l.txt", "Ingredients: Aqua, Formaldehyde."
+            )
+            for argv in ([path], [path, "--format", "json"], ["--list-checks"]):
+                Runner(*argv)
+                self.assertNotIn("on_the_list.fetch", sys.modules)
+        # And the command that does reach out is reached only by its own name.
         from on_the_list import cli
 
-        self.assertIn("update-register", cli.SUBCOMMANDS)
+        self.assertEqual(cli.SUBCOMMANDS, ("update-register", "register"))
 
 
 if __name__ == "__main__":

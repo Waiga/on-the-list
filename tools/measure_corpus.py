@@ -26,6 +26,7 @@ import gzip
 import hashlib
 import json
 import random
+import re
 import sys
 import time
 from collections import Counter
@@ -34,6 +35,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from on_the_list.analyse import analyse  # noqa: E402
+from on_the_list.ingredients import component_headings, looks_like_prose  # noqa: E402
 from on_the_list.register import load  # noqa: E402
 
 MIN_INGREDIENTS_CHARS = 50
@@ -52,8 +54,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("export", type=Path)
     parser.add_argument("--samples", type=Path, help="write a sample of findings here")
-    parser.add_argument("--sample-size", type=int, default=40)
-    parser.add_argument("--seed", type=int, default=20260909)
+    # The defaults are the ones docs/corpus-manifest.md describes for the hand
+    # audits, so the samples in that document can be redrawn exactly.
+    parser.add_argument("--sample-size", type=int, default=30)
+    parser.add_argument("--seed", type=int, default=11)
     args = parser.parse_args()
 
     digest = hashlib.sha256(args.export.read_bytes()).hexdigest()
@@ -65,6 +69,20 @@ def main() -> int:
     ingredient_count = 0
     per_check = Counter()
     labels_with = Counter()
+    # Everything the README publishes, so that a reader following the manifest
+    # gets all of it and not half of it. Six rows of the README table and every
+    # per-entry and per-statement count used to be obtainable only by writing
+    # your own script against analyse().
+    prohibited_by_condition = Counter()
+    labels_by_condition = Counter()
+    prohibited_by_entry = Counter()
+    considered_by_entry = Counter()
+    warning_by_statement = Counter()
+    colourant_by_name = Counter()
+    non_colourants_after = Counter()
+    repeated_shape = Counter()
+    prose_labels = 0
+    multi_section_labels = 0
     samples: dict[str, list] = {}
     started = time.time()
 
@@ -98,10 +116,41 @@ def main() -> int:
         if report.parsed:
             parsed += 1
         ingredient_count += len(report.ingredients)
+        if any(looks_like_prose(item) for item in report.ingredients):
+            prose_labels += 1
+        if component_headings(text):
+            multi_section_labels += 1
+        for exclusion in report.considered:
+            considered_by_entry[exclusion.entry.citation] += 1
+        conditions = set()
         seen = set()
         for finding in report.findings:
             per_check[finding.check] += 1
             seen.add(finding.check)
+            if finding.check == "prohibited":
+                key = "conditional" if finding.qualified else "unconditional"
+                prohibited_by_condition[key] += 1
+                conditions.add(key)
+                if not finding.qualified:
+                    prohibited_by_entry[finding.citation] += 1
+            elif finding.check == "colourant-order":
+                match = re.match(r"(\S+ ?\S*) is a colour index", finding.summary)
+                colourant_by_name[match.group(1).lower() if match else "?"] += 1
+                match = re.search(
+                    r"before (?:(\d+) entries|one entry)", finding.summary
+                )
+                non_colourants_after[
+                    int(match.group(1)) if match and match.group(1) else 1
+                ] += 1
+            elif finding.check == "repeated-entry":
+                repeated_shape[
+                    "whole list repeated"
+                    if "printed more than once" in finding.summary
+                    else "one name repeated"
+                ] += 1
+            elif finding.check == "warning-wording":
+                match = re.search(r"the statement '([^']+)'", finding.summary)
+                warning_by_statement[match.group(1) if match else "?"] += 1
             samples.setdefault(finding.check, []).append(
                 {
                     "code": record.get("code"),
@@ -110,6 +159,8 @@ def main() -> int:
                     "ingredients": text[:400],
                 }
             )
+        for key in conditions:
+            labels_by_condition[key] += 1
         for check in seen:
             labels_with[check] += 1
 
@@ -125,6 +176,23 @@ def main() -> int:
         "ingredients_parsed": ingredient_count,
         "findings_by_check": dict(per_check),
         "labels_with_at_least_one_finding_by_check": dict(labels_with),
+        "prohibited_findings_by_condition": dict(prohibited_by_condition),
+        "labels_with_a_prohibited_finding_by_condition": dict(labels_by_condition),
+        "unconditional_prohibited_findings_by_annex_entry": dict(
+            prohibited_by_entry.most_common()
+        ),
+        "considered_and_not_counted": sum(considered_by_entry.values()),
+        "considered_and_not_counted_by_annex_entry": dict(
+            considered_by_entry.most_common()
+        ),
+        "warning_findings_by_statement": dict(warning_by_statement.most_common()),
+        "colourant_findings_by_name": dict(colourant_by_name.most_common(15)),
+        "non_colourants_following_a_colourant": dict(
+            sorted(non_colourants_after.items())
+        ),
+        "repeated_findings_by_shape": dict(repeated_shape),
+        "labels_with_pack_prose_in_the_panel": prose_labels,
+        "labels_whose_field_carries_a_section_heading": multi_section_labels,
         "seconds": round(elapsed, 1),
         "register": {
             annex: {"last_update": v[0], "sha256": v[1], "entries": v[2]}
@@ -134,11 +202,21 @@ def main() -> int:
     print(json.dumps(summary, indent=2))
 
     if args.samples:
+        # One row per label, not per finding. The audits in
+        # docs/corpus-manifest.md were drawn from a deduplicated list, and a
+        # sample that can draw the same label twice is not the same sample.
         rng = random.Random(args.seed)
-        drawn = {
-            check: rng.sample(rows, min(args.sample_size, len(rows)))
-            for check, rows in samples.items()
-        }
+        drawn = {}
+        for check, rows in samples.items():
+            seen_codes: set[str] = set()
+            unique = [
+                row
+                for row in rows
+                if not (row["code"] in seen_codes or seen_codes.add(row["code"]))
+            ]
+            drawn[check] = rng.sample(
+                unique, min(args.sample_size, len(unique))
+            )
         args.samples.write_text(
             json.dumps({"summary": summary, "samples": drawn}, indent=2),
             encoding="utf-8",

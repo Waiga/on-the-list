@@ -31,15 +31,39 @@ class AProhibitedNameIsReportedAsAMatchAndNotAsAVerdict(unittest.TestCase):
         self.assertFalse(found[0].qualified)
 
     def test_it_never_says_illegal_unsafe_or_non_compliant(self):
-        report = run("Aqua, Formaldehyde, Butylphenyl Methylpropional")
-        words = " ".join(
-            [f.summary + " " + " ".join(f.detail) for f in report.findings]
-        ).lower()
-        for forbidden in (
+        # Every renderer, every section, several shapes of label. Scanning only
+        # the findings of one label left the limits, the considered reasons,
+        # the section headings and the blurbs unchecked -- render_text could
+        # have printed "unrecognised" on every line and this would have passed.
+        from on_the_list.report import render_json, render_markdown, render_text
+
+        labels = [
+            "Aqua, Formaldehyde, Butylphenyl Methylpropional",
+            "Aqua, Petrolatum, CI 74160, Glycerin, Glycerin",
+            "Aqua, Styrene/Acrylates Copolymer, Chromium (CI 77288)",
+            "Aqua, Sorbitol, Sodium Fluoride, CI 77891, Aroma",
+            "MASQUE: Aqua, Glycerin. GEL: Aqua, Parfum",
+            "Notarealingredient, Anotherinventedname, Aqua",
+        ]
+        forbidden = (
             "illegal", "unlawful", "non-compliant", "noncompliant", "unsafe",
-            "banned", "violation", "breach",
-        ):
-            self.assertNotIn(forbidden, words)
+            "is safe", "banned", "violation", "breach", "unknown",
+            "unrecognised", "unrecognized", "invalid",
+        )
+        for label in labels:
+            report = run(label, pack_text="A product. 50 ml.")
+            for render in (render_text, render_markdown, render_json):
+                text = render(report).lower()
+                for word in forbidden:
+                    with self.subTest(label=label[:24], word=word):
+                        self.assertNotIn(word, text)
+
+    def test_the_only_verdict_word_in_the_output_is_the_disclaimer_denying_it(self):
+        from on_the_list.report import render_text
+
+        text = render_text(run("Aqua, Formaldehyde"))
+        self.assertEqual(text.lower().count("compliant"), 1)
+        self.assertIn("Nothing here is a statement that this product is", text)
 
     def test_a_conditional_entry_is_reported_separately_with_its_condition(self):
         report = run("Aqua, Petrolatum, Glycerin")
@@ -285,3 +309,51 @@ class ThePanelIsReportedAsDirtyWhenItIs(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheReportSaysWhichAnnexEntriesNameEachIngredient(unittest.TestCase):
+    """The tool's own title, and for a while the report did not print it.
+
+    A label containing Phenoxyethanol produced no finding, and the only trace
+    of Annex V entry 29 was a coverage count saying one of three ingredients
+    was named somewhere. The reader was told an ingredient was restricted and
+    never told which annex, which entry, or under what product types.
+    """
+
+    def test_a_permitted_preservative_is_named_with_its_entry(self):
+        from on_the_list.report import render_text
+
+        text = render_text(run("Aqua, Phenoxyethanol, Glycerin"))
+        self.assertIn("WHAT THE ANNEXES NAME", text)
+        self.assertIn("Annex V, entry 29, a permitted preservative", text)
+
+    def test_being_named_is_not_a_finding(self):
+        report = run("Aqua, Phenoxyethanol, Glycerin")
+        self.assertEqual(report.findings, [])
+        self.assertTrue(report.matches)
+
+    def test_it_appears_in_json_too(self):
+        import json
+
+        from on_the_list.report import render_json
+
+        payload = json.loads(render_json(run("Aqua, Phenoxyethanol")))
+        named = payload["annex_entries_naming_an_ingredient"]
+        self.assertEqual(named[0]["printed"], "Phenoxyethanol")
+        self.assertEqual(named[0]["annex"], "V")
+
+    def test_a_colour_index_number_is_described_by_the_annex_it_is_in(self):
+        # Four colour index numbers in the register are in Annex II only:
+        # CI 12150, CI 20170, CI 27290, CI 45425, each prohibited in hair dye.
+        # The position finding used to say "listed in Annex IV as a colourant"
+        # about them, while the same report cited Annex II two sections above.
+        report = run("CI 12150, Aqua, Glycerin, Parfum")
+        found = checks_of(report, "colourant-order")
+        self.assertEqual(len(found), 1)
+        self.assertIn("Annex II, entry 1231", found[0].summary)
+        self.assertNotIn("Annex IV", found[0].summary)
+
+    def test_and_an_annex_four_one_still_says_annex_four(self):
+        report = run("Aqua, CI 77491, Glycerin")
+        found = checks_of(report, "colourant-order")
+        self.assertIn("Annex IV, entry 135", found[0].summary)

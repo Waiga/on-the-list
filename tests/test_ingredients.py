@@ -284,6 +284,36 @@ class HostileInput(unittest.TestCase):
                 trim(text)
                 component_headings(text)
 
+    def test_a_whole_analysis_survives_each_of_them_quickly(self):
+        """The parser is not the whole tool.
+
+        This class was written to catch "twenty seconds on a pathological
+        input" and for a while it only exercised the parser, so a quadratic
+        loop in the position check -- 64 seconds on 20,000 colour index
+        numbers -- lived underneath it.
+        """
+        import time
+
+        from on_the_list.analyse import analyse
+        from on_the_list.register import load
+
+        register = load()
+        cases = dict(self.CASES)
+        cases["20,000 colour index numbers"] = ", ".join(
+            f"CI {10000 + i % 50000}" for i in range(20_000)
+        )
+        cases["20,000 repeated names"] = ", ".join(["aqua"] * 20_000)
+        for name, text in cases.items():
+            with self.subTest(case=name):
+                start = time.perf_counter()
+                analyse(
+                    ingredients_text=text,
+                    label_text=text,
+                    pack_text=text,
+                    register=register,
+                )
+                self.assertLess(time.perf_counter() - start, 5.0, name)
+
     def test_building_aliases_is_not_quadratic(self):
         # A single entry holding 3,000 slash-separated names took 2.4 seconds,
         # because every comparison re-folded the whole string. Ten thousand of
@@ -293,3 +323,91 @@ class HostileInput(unittest.TestCase):
         start = time.perf_counter()
         parse(" / ".join(["aqua"] * 10_000))
         self.assertLess(time.perf_counter() - start, 5.0)
+
+
+class DefectsFoundByReview(unittest.TestCase):
+    """Each of these produced a wrong answer with no error and no warning."""
+
+    def test_a_leading_ingredients_heading_is_not_part_of_the_first_name(self):
+        # A file handed to --ingredients is usually copied straight off a pack
+        # and starts with the word. Without stripping it the first ingredient
+        # became "Ingredients: Formaldehyde", matched nothing, and the run
+        # exited 0 -- while the same text through the whole-label path reported
+        # the prohibited match.
+        block, _ = trim("Ingredients: Formaldehyde, Aqua, Glycerin")
+        self.assertEqual(
+            [i.raw for i in parse(block)], ["Formaldehyde", "Aqua", "Glycerin"]
+        )
+        for heading in ("INCI:", "Ingrédients:", "Ingredientes -"):
+            with self.subTest(heading=heading):
+                block, _ = trim(f"{heading} Formaldehyde, Aqua")
+                self.assertEqual(parse(block)[0].raw, "Formaldehyde")
+
+    def test_a_bracket_holding_most_of_the_name_leaves_a_fragment(self):
+        # "Citrus Limon (Lemon) Peel Oil" keeps four words of five and is still
+        # the name. "Styrene (Acrylate Copolymer)" keeps one of three and is a
+        # fragment, which matched the styrene monomer in Annex II.
+        self.assertIn(
+            ("Citrus Limon Peel Oil", "whole"),
+            parse("Citrus Limon (Lemon) Peel Oil")[0].aliases,
+        )
+        self.assertIn(
+            ("Titanium Dioxide", "whole"),
+            parse("Titanium Dioxide (nano)")[0].aliases,
+        )
+        self.assertIn(
+            ("Styrene", "part"), parse("Styrene (Acrylate Copolymer)")[0].aliases
+        )
+
+    def test_the_same_substance_gets_the_same_answer_either_way_round(self):
+        # "Chromium (CI 77288)" was reported as prohibited and
+        # "CI 77288 / CHROMIUM" was not. Same substance, two print orders.
+        for printed in ("Chromium (CI 77288)", "CI 77288 / CHROMIUM"):
+            with self.subTest(printed=printed):
+                kinds = {kind for _, kind in parse(printed)[0].aliases}
+                self.assertEqual(kinds, {"part"})
+
+    def test_a_tolerance_does_not_open_a_shade_range_block(self):
+        # "Glycerin +/- 0.5%" and "pH 5.5 +/- 0.5" are ordinary label text.
+        # Reading either as a shade-range marker moved every declared entry
+        # after it out of both order-dependent checks, and the only thing the
+        # report said was that the list "has a 'may contain' block".
+        for text in (
+            "Aqua, Glycerin +/- 0.5%, Parfum, CI 77491",
+            "Aqua, Glycerin, pH 5.5 ± 0.5, Parfum",
+        ):
+            with self.subTest(text=text):
+                items = parse(text)
+                self.assertTrue(all(i.position == "declared" for i in items))
+
+    def test_but_a_real_shade_range_block_still_opens_one(self):
+        for text in (
+            "Aqua, Mica [+/- CI 77491, CI 77492]",
+            "Aqua, Mica +/- CI 77491, CI 77492",
+            "Aqua, Mica, May Contain: CI 77491",
+        ):
+            with self.subTest(text=text):
+                items = parse(text)
+                self.assertTrue(any(i.position == "may-contain" for i in items))
+
+    def test_a_contains_statement_only_ends_the_list_at_a_sentence(self):
+        # "Contains Nothing Extract 2%" mid-list used to truncate the list and
+        # lose every ingredient after it, including a prohibited one.
+        kept, dropped = trim(
+            "Aqua, Glycerin, Contains Nothing Extract 2%, "
+            "Butylphenyl Methylpropional"
+        )
+        self.assertIn("Butylphenyl Methylpropional", kept)
+        self.assertEqual(dropped, "")
+
+    def test_a_content_declaration_after_a_full_stop_still_ends_it(self):
+        kept, dropped = trim(
+            "Aqua, CI 77891. Contient du fluorure de sodium (1450 ppm de fluor)"
+        )
+        self.assertNotIn("fluorure", kept)
+        self.assertIn("fluorure", dropped)
+
+    def test_replacement_characters_are_not_printable_text(self):
+        # A non-UTF-8 binary with no NUL bytes arrives as U+FFFD after
+        # errors="replace", and str.isprintable() says every one is printable.
+        self.assertTrue(looks_binary(bytes(range(128, 256)).decode("utf-8", "replace") * 40))

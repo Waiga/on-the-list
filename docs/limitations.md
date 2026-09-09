@@ -59,13 +59,28 @@ The cost is silent misses: a misspelling, a supplier's trade name, a
 transliteration, or a name the Commission happens to write differently will not
 match.
 
-**A match on part of a printed name is not reported.** `CI 77288 / CHROMIUM` is
-a colourant printed beside its element name, and the fragment `CHROMIUM` matches
-the Annex II entry for chromium metal. Over 16,635 real labels, fragment matches
-produced only wrong findings, so they are shown under *considered and not
-counted* instead. A name with a bracketed aside removed — `Titanium Dioxide
-(nano)` → `Titanium Dioxide` — is still the name of the ingredient, and does
-match.
+**A match on part of a printed name is not reported against Annex II.**
+`CI 77288 / CHROMIUM` is a colourant printed beside its element name, and the
+fragment `CHROMIUM` matches the Annex II entry for chromium metal. Over 16,635
+real labels, fragment matches produced only wrong Annex II findings, so they are
+shown under *considered and not counted* instead.
+
+A name with a bracketed aside removed is a different case: `Titanium Dioxide
+(nano)` → `Titanium Dioxide` is still the name of the ingredient, and does
+match. Whether it is depends on how much of the name survives — the part outside
+the brackets must be at least half the words. `Citrus Limon (Lemon) Peel Oil`
+keeps four of five and is the name; `Styrene (Acrylate Copolymer)` keeps one of
+three and is a fragment, and it matched the styrene monomer in Annex II until
+the rule was written down. The same test applies either way round, so `Chromium
+(CI 77288)` and `CI 77288 / CHROMIUM` now get the same answer; before, one was
+reported as prohibited and the other was not.
+
+**This narrowing is Annex II's alone.** The warning-wording check, the position
+check and the coverage count all accept a match found on a bracketed or
+slash-separated part of a printed name, and the finding does not say so. That
+is deliberate — it is the only way `CI 77891` is found inside `Titanium Dioxide
+(CI 77891)` — but it means "exact names only" is true of the prohibited check
+and not of the whole tool.
 
 **A conditional entry is reported in its own group.** Many Annex II entries are
 prohibitions with a condition attached in the Commission's own wording:
@@ -81,14 +96,14 @@ whether the condition is met.
 **A nanomaterial entry whose own INCI names do not say nano is not reported.**
 Annex II entry 1725 is `Styrene/Acrylates copolymer (nano)` and its
 identified-ingredients column reads `STYRENE/ACRYLATES COPOLYMER`, with no nano
-marker. 421 labels in the corpus print the ordinary polymer. Those are shown
+marker. 416 labels in the corpus print the ordinary polymer. Those are shown
 under *considered and not counted*, with the reason, rather than reported.
 
 **The known false positive.** Annex II entry 1388 is
 `Octamethylcyclotetrasiloxane; D4`, and its identified-ingredients column gives
 `CYCLOMETHICONE`. Cyclomethicone is the INCI name of a *mixture* of cyclic
-siloxanes; a label printing it has not said the product contains D4. 98 of the
-1,068 unconditional findings in the corpus run are this. No mechanical signal
+siloxanes; a label printing it has not said the product contains D4. 99 of the
+1,066 unconditional findings in the corpus run are this. No mechanical signal
 separates it from a correct match, and inventing an exception list for it would
 be tuning the tool against the one corpus it was measured on. It is left in and
 written down.
@@ -118,18 +133,25 @@ and the `Cl NNNNN` that scanners produce for it. Named Annex IV substances are
 not used: Titanium Dioxide is an Annex IV colourant, an Annex VI UV filter and
 an opacifier, and where it sits proves nothing about which job it is doing.
 
-Measured on 30 hand-audited findings: 3 wrong, all of them a colour index number
-the source record's OCR had mangled into something the tool read as an ordinary
-ingredient.
+The finding names the annex entries the register actually holds for that colour
+index number, which is not always Annex IV: CI 12150, CI 20170, CI 27290 and CI
+45425 are in Annex II only, each prohibited in hair dye products.
+
+Measured on 30 hand-audited findings: 4 wrong. Two are pack prose the parser
+kept, one is a make-up palette declaring several shades in one field, and one is
+an OCR'd label whose text before the word `INGREDIENTS` is unreadable.
 
 ## Why the repeated-entry check is the weakest one
 
-Measured on 30 hand-audited findings: **15 wrong.**
+Measured on 30 hand-audited findings: **16 wrong.**
 
-Every failure had the same cause. The ingredient field held more than one
-product's list — a hair colour kit's crème and developer, a gift set's shower
-gel and eau de toilette, a mouthwash's drug-facts panel. An ingredient appearing
-once in each component is not a repeated ingredient.
+Eight held more than one product's list — a hair colour kit's crème, developer
+and conditioner in one field, a 2-in-1 shampoo. An ingredient appearing once in
+each component is not a repeated ingredient.
+
+The other eight were not one product's ingredient list at all: an alphabetical
+glossary of every ingredient a brand uses, a food supplement, a certification
+mark parsed as an ingredient, and OCR damage that split one name into two.
 
 The tool detects this when the pack prints a heading it can recognise: a short
 label ending in a colon that is not itself an ingredient-list preamble or a
@@ -142,7 +164,7 @@ common case. Several heuristics were tried and each either missed almost as much
 or suppressed real findings; none is in the tool.
 
 On a single product's own ingredient list — which is what the tool is for — the
-check is sound. All fifteen correct findings in the audited sample were
+check is sound. All twelve correct findings in the audited sample were
 single-product lists. The corpus figure is still the honest one, because a user
 cannot be assumed to know which kind of input they have.
 
@@ -192,7 +214,7 @@ the right population, not that it is right.
 
 ## Where a finding can come from bad input rather than a bad label
 
-A quarter of the corpus — 4,244 of 16,635 labels — had at least one parsed
+A quarter of the corpus — 4,288 of 16,635 labels — had at least one parsed
 "ingredient" longer than any INCI name, meaning pack prose ended up inside the
 panel: a warning, a distributor address, a second product's list, a batch code.
 The tool says so in a limits line when it happens, and every count in that
@@ -206,6 +228,19 @@ Other routes:
   the middle of a name. Some of these are handled; more are not.
 - **Crowd-sourced data.** In the measurement, a finding may be about a mistyped
   record rather than about a pack.
+
+## What the offline promise does and does not cover
+
+Nothing on the analysis path can import a module that opens a connection or
+starts a process; a test reads the source and refuses one, and a second test
+runs a real analysis with `socket.socket` replaced by something that raises.
+
+What neither can see is **the filesystem**. Reading files is the whole job, so
+`pathlib` and `open` are allowed, and no static read can tell a local path from
+a network one. `--register` accepts any path, so a UNC path, an SMB or NFS
+mount, or a FUSE filesystem reaches the network with no socket call in this
+package's own source. That is a real gap and it is written down here and in the
+test's own docstring rather than left to be discovered.
 
 ## Scope
 

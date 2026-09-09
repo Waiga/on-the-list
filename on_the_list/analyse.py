@@ -70,8 +70,10 @@ def analyse(
     if parsed and not items:
         parsed = False
         limits.append(
-            "An ingredient heading was found but nothing under it parsed into "
-            "ingredients."
+            "Nothing in what was supplied parsed into ingredients."
+            if ingredients_text.strip()
+            else "An ingredient heading was found but nothing under it parsed "
+            "into ingredients."
         )
 
     headings = ing.component_headings(block) if parsed else []
@@ -100,14 +102,13 @@ def analyse(
         one_list=not headings,
     )
     if not parsed:
+        # Every reason, not only the ones that had run. Leaving the others
+        # alone let warning-wording keep "no pack text was supplied, so there
+        # was nothing to search. Pass --pack-text to run it." on a run where
+        # --pack-text had been supplied: the report told the reader to do the
+        # thing they had just done.
         runs = [
-            run
-            if not run.ran
-            else type(run)(
-                run.name,
-                False,
-                "there was no ingredient list to check.",
-            )
+            type(run)(run.name, False, "there was no ingredient list to check.")
             for run in runs
         ]
         findings = []

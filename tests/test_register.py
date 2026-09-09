@@ -34,9 +34,28 @@ class TheVendoredRegisterLoads(unittest.TestCase):
                 self.assertEqual(digest, record["sha256"])
                 self.assertEqual(rows, record["data_rows"])
 
-    def test_the_register_is_the_size_the_readme_says(self):
-        # If this number moves, every count in the README is stale.
+    def test_every_derived_count_in_the_manifest(self):
+        """The five numbers docs/corpus-manifest.md calls derived counts.
+
+        That document promises each is asserted here, so that a parser change
+        which moves one fails the suite rather than leaving the document
+        quietly wrong. For a while it promised that and only two of the five
+        were actually asserted, which is how the colour index count sat there
+        off by one.
+        """
+        entries = REGISTER.entries
+        annex_two = [e for e in entries if e.annex == "II"]
+        later = [e for e in entries if e.annex in ("III", "IV", "V", "VI")]
+        with_statement = [e for e in entries if e.label_phrases]
+        statements = {p for e in entries for p in e.label_phrases}
+
         self.assertEqual(REGISTER.info.name_count, 1913)
+        self.assertEqual(len(REGISTER.colour_index_names), 147)
+        self.assertEqual(len(annex_two), 1758)
+        self.assertEqual(len([e for e in annex_two if e.names]), 314)
+        self.assertEqual(len(later), 627)
+        self.assertEqual(len(with_statement), 38)
+        self.assertEqual(len(statements), 35)
 
     def test_it_refuses_a_vendored_file_that_has_been_edited(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -111,12 +130,23 @@ class TheRegisterIsCleanEnoughToMatchAgainst(unittest.TestCase):
     def test_no_name_is_a_bare_locant(self):
         # "N", "1", "2'" -- what a plain comma split leaves behind. A register
         # containing them matches junk tokens on real labels.
-        junk = [
-            name
-            for name in REGISTER.by_name
-            if len(name) < 3 and not name.isalpha()
-        ]
+        #
+        # The predicate is the parser's own, not a hand-written one. An earlier
+        # version filtered `len(name) < 3 and not name.isalpha()`, which cannot
+        # catch "n": `"n".isalpha()` is True, so the one name the test was
+        # written for walked straight past it.
+        from on_the_list.annexes import _is_locant_run
+
+        junk = [name for name in REGISTER.by_name if _is_locant_run(name)]
         self.assertEqual(junk, [])
+
+    def test_the_locant_guard_can_catch_the_thing_it_is_for(self):
+        from on_the_list.annexes import _is_locant_run
+
+        for junk in ("n", "N", "1", "2'", "1,2", "alpha", "n,n"):
+            self.assertTrue(_is_locant_run(junk), junk)
+        for real in ("aqua", "bht", "ci 77491", "glycerin", "peg-3"):
+            self.assertFalse(_is_locant_run(real), real)
 
     def test_folding_a_register_name_again_changes_nothing(self):
         for name in REGISTER.by_name:
@@ -125,8 +155,6 @@ class TheRegisterIsCleanEnoughToMatchAgainst(unittest.TestCase):
 
     def test_the_colour_index_names_look_like_colour_index_numbers(self):
         names = REGISTER.colour_index_names
-        # Named in docs/corpus-manifest.md. If it moves, that file is stale.
-        self.assertEqual(len(names), 147)
         for name in names:
             self.assertRegex(name, r"^ci \d{5}(?::\d{1,2})?$")
 
@@ -139,8 +167,8 @@ class TheRegisterIsCleanEnoughToMatchAgainst(unittest.TestCase):
         """
         rows = [e for e in REGISTER.entries if e.annex == "II"]
         named = [e for e in rows if e.names]
-        self.assertEqual(len(rows), 1758)
-        self.assertEqual(len(named), 314)
+        self.assertEqual(len(named) / len(rows), 314 / 1758)
+        self.assertLess(len(named) / len(rows), 0.20)
 
 
 if __name__ == "__main__":

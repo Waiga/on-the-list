@@ -37,6 +37,15 @@ ingredient no entry names is *not restricted by these annexes* and nothing more.
 There is no `unknown` category, and a change that introduces one will be closed.
 The reasoning is in `docs/superpowers/specs/2026-09-09-on-the-list-design.md`.
 
+**Every check counts as run only if it ran.** Switching all four off exits 2,
+not 0: "nothing found" about a comparison that never happened is the one
+sentence this tool must never print.
+
+**A rate that is bad gets published, not tuned.** Two of the four checks have
+error rates in the README that would be easy to improve by raising a threshold
+against the corpus they were measured on. Do not. If a change improves a rate,
+the pull request has to say why it is a correctness fix and not a fit.
+
 **No check may depend on a concentration.** A label does not state one.
 
 **The analysis path stays offline.** `fetch.py` is the only module allowed to
@@ -60,10 +69,14 @@ on-the-list register          # read the new hashes and dates
 ```
 
 Then update `registry_manifest.py` — filename, hash, size, dates, row count —
-and re-run the suite. Several tests assert counts derived from the register
-(1,913 distinct names, 314 named Annex II rows, 38 entries with an extractable
-warning statement); if those move, the numbers in the README have moved too, and
-both must be corrected in the same change. That coupling is deliberate.
+and re-run the suite. `tests/test_register.py` asserts every derived count that
+`docs/corpus-manifest.md` publishes: 1,913 distinct names, 147 colour index
+numbers, 314 named rows of Annex II's 1,758, 627 entries in Annexes III to VI,
+38 of them yielding a `Contains …` statement, and 35 distinct statements. If any
+moves, the numbers in the README and the manifest have moved too, and all of it
+must be corrected in the same change. That coupling is deliberate, and it exists
+because it was once only promised: three of the six were unasserted, and the
+colour index count sat in the manifest off by one.
 
 Never hand-edit a CSV. The value of the vendored copy is that a stranger can
 `curl` the API and get the same bytes.

@@ -82,9 +82,9 @@ on-the-list update-register                # the only command that uses the netw
 ```
 
 Exit codes: `0` nothing found, `1` at least one finding, `2` could not run. A
-label whose ingredient list did not parse exits `2`, never `0`: a green CI job
-over a label that nothing was compared to is the one thing this tool exists not
-to do.
+label whose ingredient list did not parse exits `2`, never `0`, and so does a
+run with every check switched off: a green CI job over a label that nothing was
+compared to is the one thing this tool exists not to do.
 
 ## The four checks
 
@@ -99,8 +99,18 @@ never read as a check that found nothing.
 | **repeated-entry** | The same name appears twice in the declared list. Needs no register at all. |
 | **warning-wording** | An annex attaches a `Contains …` statement to an ingredient on the list, and that statement is not in the pack text you supplied. Reported as a **gap between two documents**, never as a violation: the wording may be printed somewhere the supplied text does not cover, in another language, or the entry's condition may not apply. It needs pack text to search — a whole label file counts as that, `--ingredients` on its own does not — and it says which when it does not run. |
 
-Plus a **coverage** count: how many ingredients no annex entry names, labelled
-*not restricted by these annexes*.
+Two things that are not checks and change no exit code:
+
+**What the annexes name.** Every entry in Annexes II to VI that names an
+ingredient on the list, with what that annex is — prohibited, restricted, a
+permitted colourant, preservative or UV filter — and the product types the entry
+is limited to. This is the tool's own title, and for a while it was the one
+thing the report did not print: a label containing Phenoxyethanol produced no
+finding, and the reader was told one of three ingredients was named somewhere
+and never told where.
+
+**Coverage.** How many ingredients no annex entry names, labelled *not
+restricted by these annexes*.
 
 ### Four narrowings that cost coverage on purpose
 
@@ -177,83 +187,95 @@ is at least 50 characters. Nothing else is filtered or sampled.
 |---|---|
 | Records in the export | 64,237 |
 | Labels selected | 16,635 |
-| Labels whose list parsed | 16,534 |
+| Labels whose list parsed | 16,535 |
 | Crashes | 0 |
-| Ingredients parsed | 297,868 |
-| **Annex II matches** | **2,433** on 2,050 labels |
-| — where the annex entry is unconditional | 1,068 on 944 labels |
-| — where the annex entry sets a condition | 1,365 on 1,179 labels |
-| Colourant position | 962 on 641 labels |
+| Ingredients parsed | 298,423 |
+| **Annex II matches** | **2,408** on 2,037 labels |
+| — where the annex entry is unconditional | 1,066 on 942 labels |
+| — where the annex entry sets a condition | 1,342 on 1,167 labels |
+| Colourant position | 975 on 645 labels |
 | Repeated entries | 712 on 291 labels |
-| Warning wording not found | 1,166 on 1,023 labels |
-| Considered and not counted | 522 |
-| Labels where the panel contains pack prose | 4,244 (25.5%) |
-| Labels where the field holds more than one list | 1,631 (9.8%) |
+| Warning wording not found | 1,170 on 1,027 labels |
+| Considered and not counted | 554 |
+| Labels with pack prose inside the ingredient panel | 4,288 (25.8%) |
+| Labels whose ingredient field carries a section heading | 1,631 (9.8%) |
+
+Every one of those comes out of `tools/measure_corpus.py`, including the
+per-entry and per-statement breakdowns quoted below. `--samples` draws the
+audit samples with the seed and size the manifest names.
 
 ### How wrong each check is
 
-Hand-audited against the published annex text or the label's own list. These are
-the numbers, not a summary of them.
+Hand-audited against the published annex text or the label's own list. These
+are the numbers, not a summary of them.
 
-**prohibited — 9.2% wrong on the unconditional group.** All 20 Annex II entries
-behind the 1,068 unconditional findings were read against the annex text.
-Nineteen are correct: Butylphenyl Methylpropional (654 findings), Zinc
+**prohibited — 9.3% wrong on the unconditional group.** All 19 Annex II entries
+behind the 1,066 unconditional findings were read against the annex text.
+Eighteen are correct: Butylphenyl Methylpropional (651 findings), Zinc
 Pyrithione (105), Hydroxyisohexyl 3-Cyclohexene Carboxaldehyde (100),
-Pentasodium Pentetate (65), Ergocalciferol and Cholecalciferol (13), borates
-(7), 4-Methylbenzylidene Camphor (5), and a tail of one to four each. One is
-wrong, and it is the tool's largest single known false positive: **Annex II
-entry 1388 is `Octamethylcyclotetrasiloxane; D4`, and the Commission's own
-identified-ingredients column gives its INCI name as `CYCLOMETHICONE`**.
-Cyclomethicone names a *mixture* of cyclic siloxanes, so a label printing it has
-not said it contains D4. That produced 98 findings. There is no mechanical
-signal separating this from a correct match, so it is reported here rather than
-patched around.
+Pentasodium Pentetate (65), Ergocalciferol and Cholecalciferol (11), borates
+(7), 4-Methylbenzylidene Camphor (5), Formaldehyde (4), and a tail of one to
+three each. One is wrong, and it is the tool's largest single known false
+positive: **Annex II entry 1388 is `Octamethylcyclotetrasiloxane; D4`, and the
+Commission's own identified-ingredients column gives its INCI name as
+`CYCLOMETHICONE`**. Cyclomethicone names a *mixture* of cyclic siloxanes, so a
+label printing it has not said it contains D4. That produced 99 findings. There
+is no mechanical signal separating this from a correct match, so it is reported
+here rather than patched around.
 
-The 1,365 conditional findings are counted neither right nor wrong, because an
-ingredient list cannot settle them. They are dominated by three entries whose
-condition no label states: the furocoumarin entry that names ordinary citrus
-oils *"except for normal content in natural essences used"*, petrolatum *"except
-if the full refining history is known"*, and the colourants prohibited only
+The 1,342 conditional findings are counted neither right nor wrong, because an
+ingredient list cannot settle them. They are dominated by entries whose
+condition no label states: petrolatum *"except if the full refining history is
+known"*, the furocoumarin entry that names ordinary citrus oils *"except for
+normal content in natural essences used"*, and the colourants prohibited only
 *"when used as a substance in hair dye products"*. Each is printed with its own
 wording so a reader can see the condition and decide.
 
-**colourant-order — 3 of 30 wrong.** A random sample of 30 findings, each read
-against the label's own list. That audit predates two later parsing fixes; over
-the same 30 records the shipped code still produces all three wrong findings and
-one fewer sound one. All three failures are OCR damage in the source record: `ct 42051` and `CI 074260` are colour index numbers a scanner mangled,
-so the tool counted them as non-colourants sitting after a colourant. The
-underlying weakness is deeper than the sample shows, and it is stated in
-[`docs/limitations.md`](docs/limitations.md): the Regulation *permits* colourants
-after the other ingredients but does not *require* it, so a colourant in weight
-order is not necessarily out of place. The check reports where a name is printed
-and nothing more.
+**colourant-order — 4 of 30 wrong.** Thirty findings drawn by
+`tools/measure_corpus.py --samples out.json` (seed 11, one row per label), each
+read against the label's own list. Two failures are pack prose that the parser
+kept — Spanish marketing copy after the colourants, and an OCR'd panel where
+the list has no commas at all. One is a make-up palette declaring several
+shades in one field. One is an OCR'd label whose text before `INGREDIENTS` is
+unreadable.
 
-**repeated-entry — 15 of 30 wrong.** A random sample of 30, read the same way.
-This is the weakest check in the tool and the number is not a typo. Every one of
-the fifteen failures has the same cause: **the ingredient field held more than
-one product's list.** A hair colour kit declares the crème, the developer and
-the conditioner in one field; a gift set declares a shower gel and an eau de
-toilette; an American mouthwash runs its drug-facts panel into the list. An
-ingredient appearing once in each component is not a repeated ingredient.
+The underlying weakness is deeper than that rate suggests, and it is stated in
+[`docs/limitations.md`](docs/limitations.md): the Regulation *permits*
+colourants after the other ingredients but does not *require* it, so a colourant
+in weight order is not necessarily out of place. The check reports where a name
+is printed and nothing more.
 
-The tool detects that when the pack prints a heading it can see — `Gel N°1:`,
-`MASQUE:`, a second `Ingredients:` — and then says so and does not run the two
-order-dependent checks. It flagged 1,631 of the 16,635 labels that way. It
-cannot detect it when the pack prints no heading, which is most of the time, and
-no heuristic tried here improved that materially without losing real findings.
+**repeated-entry — 16 of 30 wrong.** Thirty findings from the same draw, read
+the same way. This is the weakest check in the tool and the number is not a
+typo.
+
+Eight of the sixteen are **multi-component packs**: a hair colour kit declaring
+the crème, the developer and the conditioner in one field; a 2-in-1 shampoo. An
+ingredient appearing once in each component is not a repeated ingredient. The
+other eight are fields that are not one product's ingredient list at all — an
+alphabetical glossary of every ingredient a brand uses, a food supplement, a
+certification mark parsed as an ingredient, and OCR damage that split one name
+into two.
+
+The tool detects the multi-component case when the pack prints a heading it can
+see — `Gel N°1:`, `MASQUE:`, a second `Ingredients:` — and then says so and does
+not run either order-dependent check. It flagged 1,631 of the 16,635 labels that
+way. It cannot detect it when the pack prints no heading, which is most of the
+time, and no heuristic tried here improved that materially without losing real
+findings.
 
 **On a single product's own ingredient list — which is what the tool is for —
-none of the fifteen failure modes applies.** All fifteen sound findings in the
+none of the sixteen failure modes applies.** All twelve sound findings in the
 same sample were single-product lists. The corpus number is still the honest one
-to publish, and it is 50%.
+to publish, and it is 53%.
 
 **warning-wording — not measured.** Open Beauty Facts carries no field holding
 the text printed on a pack, so every finding in the corpus run is a gap by
 construction and the rate means nothing. What the run does establish is that the
-check fires on the right population: of the 1,166 findings, 690 are
-`Contains sodium fluoride` on fluoride toothpastes, 131
+check fires on the right population: of the 1,170 findings, 692 are
+`Contains sodium fluoride` on fluoride toothpastes, 132
 `Contains sodium monofluorophosphate`, 127 `Contains hydrogen peroxide` on
-developers, 93 `Contains ammonia` on hair colour and 49
+developers, 93 `Contains ammonia` on hair colour and 48
 `Contains Benzophenone-3` on sunscreens. Its accuracy is untested, and this
 README will say so until a corpus with real pack text exists.
 
@@ -265,11 +287,13 @@ or by reading the annexes against their own text:
 - **Feeding `csv.reader` a list of lines destroys newlines inside quoted
   fields.** The annexes put ten-line warning blocks in one cell.
   `Contains selenium disulphide\nAvoid contact with eyes` silently became one
-  string, and six of the thirty extractable warning statements ran on into the
-  sentence after them. No error, all tests green. The reader uses `io.StringIO`.
+  string. The extractor found 32 statements instead of 38, and 19 of the ones it
+  did find ran on into the sentence after them. No error, all tests green. The
+  reader uses `io.StringIO`.
 - **The identified-ingredients column is comma-separated and its values contain
-  commas.** `N,N-DIETHYL-m-AMINOPHENOL` splits into `N` and the rest on 40 rows,
-  putting a substance called `N` into the register.
+  commas.** A plain `split(",")` gives a different answer from the parser on 52
+  rows, and on 38 of them it leaves a one-character fragment: a substance called
+  `N`, from `N,N-DIETHYL-m-AMINOPHENOL`.
 - **Annex II entry 1725 is `Styrene/Acrylates copolymer (nano)` and lists the
   ordinary INCI name beside it.** 421 labels printing the ordinary polymer
   matched a prohibited entry that is not about it. They are now reported as
@@ -289,8 +313,9 @@ or by reading the annexes against their own text:
   beside a correctly read `CI` in the same list.
 - **`Styrene / Acrylates Copolymer` is one name, not two.** Treating a spaced
   slash as a synonym separator left the fragment `Styrene`, which matches the
-  styrene monomer in Annex II, on 21 real labels. A polymer names its monomers
-  with slashes; the rule now says so.
+  styrene monomer in Annex II, on 35 real labels. Requiring a space on both
+  sides of the slash left 21 of them; a polymer names its monomers with slashes,
+  and the rule now says so, which leaves none.
 - **Hydroquinone is prohibited by Annex II "with the exception of entry 14 in
   Annex III"**, where it is allowed in professional nail products. Reporting
   only the prohibition is a half-truth, so a match that also appears in another
@@ -298,6 +323,26 @@ or by reading the annexes against their own text:
 - **Only 314 of Annex II's 1,758 rows carry an INCI name at all.** The rest are
   chemical or CAS identifiers with no cosmetic-glossary equivalent. The
   prohibited check can only see 18% of the prohibited list.
+- **A file handed to `--ingredients` usually starts with the word
+  "Ingredients:".** It was not stripped on that path, so the first ingredient
+  became `Ingredients: Formaldehyde`, matched nothing, and the run exited 0 —
+  while the same text through the whole-label path reported the match.
+- **`Chromium (CI 77288)` was reported as prohibited and `CI 77288 / CHROMIUM`
+  was not.** Same substance, two print orders, opposite answers. What survives a
+  bracket being removed is the name only if it is at least half the words.
+- **`Glycerin +/- 0.5%` opened a shade-range block.** Every declared ingredient
+  after a printed tolerance dropped out of both order-dependent checks, and the
+  report said only that the list had a "may contain" block.
+- **The position check was quadratic.** 20,000 colour index numbers took 64
+  seconds; the hostile-input tests never called the checks, only the parser.
+- **A colourant found only in Annex II was described as "listed in Annex IV".**
+  Four are: CI 12150, CI 20170, CI 27290 and CI 45425, each prohibited in hair
+  dye. The finding now names the entries the register actually holds.
+- **A malformed `--register` directory raised a traceback and exited 1** — the
+  code for "findings were reported" — and the message about the Commission
+  having changed the export format was unreachable.
+- **`--skip` on all four checks exited 0.** Nothing was compared, and the report
+  said "nothing found".
 
 The corpus itself is not redistributed here. Open Beauty Facts is ODbL 1.0,
 which is share-alike and incompatible with this repository's MIT licence. Only
@@ -315,9 +360,13 @@ none. The long version is in [`docs/limitations.md`](docs/limitations.md).
   limit is not something a name can breach.
 - **It cannot see product type.** A restriction on hair dye says nothing about a
   face cream, and an ingredient list does not say which the product is.
-- **It matches exact names only.** No fuzzy matching, no substring search. A
-  misspelling, a supplier's trade name, or a name the Commission writes
-  differently will not match, and the tool will not tell you it missed one.
+- **It matches exact names only, after folding.** No fuzzy matching, no
+  substring search, no edit distance. A misspelling, a supplier's trade name, or
+  a name the Commission writes differently will not match, and the tool will not
+  tell you it missed one. It does look a printed name up under a bracketed or
+  slash-separated part of itself — that is how `CI 77891` is found inside
+  `Titanium Dioxide (CI 77891)` — but **only the Annex II check refuses a match
+  found that way**; the other checks and the coverage count accept it.
 - **It reads five annexes.** Annex I (the safety report) and Annex VII are not
   read, and neither is any national requirement, retailer standard, or rule
   outside the EU.

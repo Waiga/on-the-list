@@ -45,12 +45,19 @@ on-the-list register
 ```
 
 **Derived counts.** 1,913 distinct names across the five annexes after folding,
-of which 147 are colour index numbers. 314 of Annex II's 1,758 rows carry an
-INCI name at all. 38 of the 627 entries in Annexes III to VI yield a
+of which 147 are colour index numbers. These are names as the register prints
+them, from two columns: the Common Ingredients Glossary and the
+identified-ingredients column, which also holds chemical and CAS-style
+identifiers. It is not a count of 1,913 INCI names. 314 of Annex II's 1,758 rows
+carry a name at all. 38 of the 627 entries in Annexes III to VI yield a
 `Contains …` statement the warning check will look for, giving 35 distinct
-statements. Every one of those is asserted by a test in `tests/test_register.py`
-and `tests/test_annexes.py`, so a change to the parser that moves them fails the
-suite rather than quietly restating the README.
+statements.
+
+Every one of those five numbers is asserted by a test in
+`tests/test_register.py`, so a change to the parser that moves one fails the
+suite rather than leaving this document quietly wrong. For a while the sentence
+promised that and only two of the five were actually asserted, which is how the
+colour index count sat here wrong.
 
 **Licence.** European Commission material. Reuse is governed by Commission
 Decision 2011/833/EU of 12 December 2011; the Commission's legal notice states
@@ -82,7 +89,7 @@ characters. Nothing else is filtered, sorted or sampled. That gives **16,635
 labels**.
 
 The 50-character floor is a real limit on what the measurement proves. A parse
-rate of 16,534 out of 16,635 is partly guaranteed by that selection and is not
+rate of 16,535 out of 16,635 is partly guaranteed by that selection and is not
 an achievement of the parser.
 
 **Reproduce it.**
@@ -93,10 +100,20 @@ shasum -a 256 en.openbeautyfacts.org.products.csv.gz
 python3 tools/measure_corpus.py en.openbeautyfacts.org.products.csv.gz
 ```
 
-`tools/measure_corpus.py` prints the whole summary as JSON, including the
-register hashes it ran against, so a result carries its own provenance. Add
-`--samples out.json` to draw a reproducible sample of findings for auditing; the
-seed is fixed and printed in the script.
+`tools/measure_corpus.py` prints **every number published about this tool** as
+JSON, including the register hashes it ran against, so a result carries its own
+provenance: the totals, the conditional/unconditional split, the per-annex-entry
+counts behind the prohibited findings, the per-statement counts behind the
+warning findings, the exclusions, and the counts of labels carrying pack prose
+or a section heading.
+
+For a while it printed about half of them and the rest could only be obtained by
+writing your own script against `analyse()`, which made "the script that
+produced every number here" false. It is true now.
+
+Add `--samples out.json` to draw the audit samples below. The defaults are the
+ones those audits used — seed 11, thirty findings, one row per label — so they
+can be redrawn exactly.
 
 Open Beauty Facts is republished daily. The hash above is how you can tell
 whether you have the file these numbers came from. If you do not, expect the
@@ -117,10 +134,20 @@ reproducible from the corpus above.
 
 | Check | Sample | Method | Wrong |
 |---|---|---|---|
-| prohibited | all 20 Annex II entries behind the 1,068 unconditional findings | each entry's chemical name read against the annex text | 1 entry, 98 findings (9.2%) |
-| colourant-order | 30 findings, `random.Random(11)` over the deduplicated finding list | each read against the label's own printed list | 3 (10%) |
-| repeated-entry | 30 findings, same draw | same | 15 (50%) |
+| prohibited | all 19 Annex II entries behind the 1,066 unconditional findings | each entry's chemical name read against the annex text | 1 entry, 99 findings (9.3%) |
+| colourant-order | 30 findings, `--samples` at the default seed and size | each read against the label's own printed list | 4 (13%) |
+| repeated-entry | 30 findings, same draw | same | 16 (53%) |
 
 The prohibited audit is exhaustive over entries rather than sampled over
-findings, because 20 entries account for all 1,068 unconditional findings and
-reading 20 annex rows settles every one of them.
+findings, because 19 entries account for all 1,066 unconditional findings and
+reading 19 annex rows settles every one of them.
+
+Redraw the two samples with:
+
+```bash
+python3 tools/measure_corpus.py <export> --samples audit.json
+```
+
+The draw is deduplicated by label and seeded at 11, so the same export gives the
+same thirty findings per check. A different export will not: Open Beauty Facts
+is republished daily, and the hash above is how you tell.

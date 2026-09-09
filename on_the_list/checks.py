@@ -241,6 +241,20 @@ def check_colourant_order(
             return True
         return any(is_colour_index(fold(alias)) for alias, _ in item.aliases)
 
+    # How many non-colourants follow each position, computed once. Rebuilding
+    # the tail inside the loop was quadratic: a list of 20,000 colour index
+    # numbers took 64 seconds and produced a 4 MB report.
+    tail: list[int] = [0] * (len(declared) + 1)
+    first_after: list[Ingredient | None] = [None] * (len(declared) + 1)
+    for position in range(len(declared) - 1, -1, -1):
+        item = declared[position]
+        if is_colourant(item):
+            tail[position] = tail[position + 1]
+            first_after[position] = first_after[position + 1]
+        else:
+            tail[position] = tail[position + 1] + 1
+            first_after[position] = item
+
     for position, ingredient in enumerate(declared):
         if not is_colour_index(ingredient.normalised):
             continue
@@ -248,27 +262,35 @@ def check_colourant_order(
             # A CI number the annexes do not list. Reported by the coverage
             # count, not here: an unlisted colourant is not a position problem.
             continue
-        after = [
-            other for other in declared[position + 1 :] if not is_colourant(other)
-        ]
-        if not after:
+        count = tail[position + 1]
+        if not count:
             continue
-        entry = register.lookup(ingredient.normalised)[0]
+        following = first_after[position + 1]
+        entries = register.lookup(ingredient.normalised)
+        entry = entries[0]
+        # Four colour index numbers in the register appear only in Annex II --
+        # CI 12150, CI 20170, CI 27290 and CI 45425, each prohibited in hair
+        # dye products. Saying "listed in Annex IV as a colourant" about one of
+        # those is an assertion the data does not support, and the same report
+        # cited Annex II for it two sections earlier.
+        where = ", ".join(sorted({e.citation for e in entries}))
         findings.append(
             Finding(
                 check="colourant-order",
                 summary=(
-                    f"{ingredient.raw} is listed in Annex IV as a colourant and "
-                    f"is printed {_ordinal(ingredient.index)}, before "
+                    f"{ingredient.raw} is a colour index number named in "
+                    f"{where}, and is printed {_ordinal(ingredient.index)}, "
+                    "before "
                     + (
                         "one entry that is not a colour index number."
-                        if len(after) == 1
-                        else f"{len(after)} entries that are not colour index "
+                        if count == 1
+                        else f"{count} entries that are not colour index "
                         "numbers."
                     )
                 ),
                 detail=(
-                    "the first of those is: " + after[0].raw,
+                    "the first of those is: "
+                    + (following.raw if following else ""),
                     "Article 19(1)(g) allows colourants in any order after the "
                     "other ingredients, so their position is normally the end "
                     "of the list. This is a statement about where the name is "

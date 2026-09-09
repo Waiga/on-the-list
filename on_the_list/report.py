@@ -27,18 +27,30 @@ _ABSENCE = (
 )
 
 
-def _wrap(text: str, indent: str = "", width: int = 78) -> list[str]:
+def _wrap(
+    text: str, indent: str = "", width: int = 78, hang: str | None = None
+) -> list[str]:
+    """Wrap to ``width``, indenting continuation lines by ``hang``.
+
+    Without a hanging indent a wrapped item's second line starts level with
+    the label in front of it and stops looking like one item.
+    """
     words = text.split()
     lines: list[str] = []
+    continuation = indent if hang is None else hang
     current = indent
     for word in words:
         if len(current) + len(word) + 1 > width and current.strip():
             lines.append(current.rstrip())
-            current = indent
+            current = continuation
         current += word + " "
     if current.strip():
         lines.append(current.rstrip())
     return lines
+
+
+def _plural(n: int, noun: str) -> str:
+    return f"{n} {noun}" if n == 1 else f"{n} {noun}s"
 
 
 def _headline(report: Report) -> str:
@@ -53,7 +65,8 @@ def _headline(report: Report) -> str:
     if not counts:
         ran = [c.name for c in report.checks if c.ran]
         line = (
-            f"{len(report.ingredients)} ingredients read. Nothing found by the "
+            f"{_plural(len(report.ingredients), 'ingredient')} read. "
+            "Nothing found by the "
             f"{len(ran)} check{'s' if len(ran) != 1 else ''} that ran."
         )
         if report.considered:
@@ -69,7 +82,7 @@ def _headline(report: Report) -> str:
         return line
     parts = [f"{n} {name.replace('-', ' ')}" for name, n in counts.items()]
     return (
-        f"{len(report.ingredients)} ingredients read. "
+        f"{_plural(len(report.ingredients), 'ingredient')} read. "
         + ", ".join(parts)
         + "."
     )
@@ -112,6 +125,53 @@ _HEADINGS = {
         "wording may be printed somewhere the supplied text does not cover.",
     ),
 }
+
+
+#: How each annex is described in one word, for the entry list.
+_ANNEX_IS = {
+    "II": "prohibited",
+    "III": "restricted",
+    "IV": "a permitted colourant",
+    "V": "a permitted preservative",
+    "VI": "a permitted UV filter",
+}
+
+
+def entry_lines(report: Report) -> list[str]:
+    """One line per ingredient the annexes name, with the entries naming it.
+
+    This is the tool's own title, and for a while the report did not print it:
+    a label containing Phenoxyethanol produced no finding, and the only trace
+    of Annex V entry 29 was the coverage count saying one of three ingredients
+    was named somewhere. The reader was told an ingredient was restricted and
+    never told which annex, which entry, or under what product types.
+
+    It is not a check. Nothing here is a finding and nothing here changes the
+    exit code -- being named by an annex is the ordinary condition of a great
+    many ingredients.
+    """
+    lines: list[str] = []
+    seen: set[str] = set()
+    for match in report.matches:
+        if match.ingredient.raw in seen:
+            continue
+        seen.add(match.ingredient.raw)
+        entries = [m.entry for m in report.matches if m.ingredient is match.ingredient]
+        for entry in entries:
+            what = _ANNEX_IS.get(entry.annex, entry.annex)
+            line = f"  {match.ingredient.raw} — {entry.citation}, {what}"
+            if entry.annex == "II" and entry.qualifier:
+                line += f", with a condition ('{entry.qualifier}')"
+            lines.append(line)
+            if entry.product_types:
+                types = " ".join(entry.product_types.split())
+                lines.extend(
+                    _wrap(
+                        "limited to: " + (types[:150] + "..." if len(types) > 150 else types),
+                        "        ",
+                    )
+                )
+    return lines
 
 
 def render_text(report: Report) -> str:
@@ -162,6 +222,23 @@ def render_text(report: Report) -> str:
             out.extend(_wrap(item.reason, "      "))
             out.append("")
 
+    entries = entry_lines(report)
+    if entries:
+        out.append("WHAT THE ANNEXES NAME")
+        out.extend(
+            _wrap(
+                "Every entry in Annexes II to VI that names an ingredient on "
+                "this list. Being named is not a finding: Annexes III to VI "
+                "are the restricted, permitted-colourant, "
+                "permitted-preservative and permitted-UV-filter lists, and "
+                "most cosmetics contain something on one of them.",
+                "  ",
+            )
+        )
+        out.append("")
+        out.extend(entries)
+        out.append("")
+
     if report.parsed:
         out.append("COVERAGE")
         out.extend(
@@ -185,7 +262,15 @@ def render_text(report: Report) -> str:
         if run.ran:
             out.append(f"  ran      {run.name} — {run.findings} found")
         else:
-            out.append(f"  not run  {run.name} — {run.reason}")
+            # Wrapped like everything else. A long reason used to run off the
+            # right of a report every other line of which stops at 78 columns.
+            # The reason is wrapped on its own so that the two-space column
+            # after "not run" survives -- _wrap splits on whitespace and would
+            # otherwise close it up.
+            prefix = f"  not run  {run.name} — "
+            wrapped = _wrap(run.reason, " " * len(prefix))
+            wrapped[0] = prefix + wrapped[0].strip()
+            out.extend(wrapped)
     out.append("")
     out.extend(
         _wrap(
@@ -226,6 +311,13 @@ def render_markdown(report: Report) -> str:
         if any(f.qualified for f in found):
             out.append(_QUALIFIED_BLURB)
             out.append("")
+    entries = entry_lines(report)
+    if entries:
+        out.append("## What the annexes name")
+        out.append("")
+        for line in entries:
+            out.append("-" + line[1:] if line.startswith("  ") and not line.startswith("        ") else "  " + line.strip())
+        out.append("")
     if report.considered:
         out.append("## Considered and not counted")
         out.append("")
@@ -295,6 +387,19 @@ def render_json(report: Report) -> str:
                 "annex_entry_sets_a_condition": finding.qualified,
             }
             for finding in report.findings
+        ],
+        "annex_entries_naming_an_ingredient": [
+            {
+                "printed": match.ingredient.raw,
+                "annex": match.entry.annex,
+                "citation": match.entry.citation,
+                "register_name": match.matched_name,
+                "matched_on": match.via_kind,
+                "chemical_name": match.entry.chemical_name,
+                "product_types": " ".join(match.entry.product_types.split()),
+                "conditions_and_warnings": " ".join(match.entry.wording.split()),
+            }
+            for match in report.matches
         ],
         "considered_and_not_counted": [
             {

@@ -75,12 +75,16 @@ _INLINE_TERMINATOR = re.compile(
     # required, because several of the panel words -- usage, application,
     # purpose, attention -- are ordinary enough that matching them bare would
     # cut a list short.
-    r"(?i)(?:^|[.;])\s*(?:" + _PANEL_WORDS + r")\s*:"
+    r"(?i)(?:^|[.;\n])\s*(?:" + _PANEL_WORDS + r")\s*:"
     r"|\b(?:if\s+swallowed|if\s+in\s+eyes|avoid\s+contact\s+with\s+"
     r"(?:the\s+)?eyes|call\s+a?\s*poison|seek\s+medical|discontinue\s+use|"
     r"keep\s+out\s+of\s+reach|for\s+external\s+use\s+only)\b"
-    r"|\b(?:contains?|contient|cont[eé]m|contiene|contien[ei]|inneholder|"
-    r"indeholder|enth[äa]lt|inneh[åa]ller|sis[äa]lt[äa][äa])\b"
+    # The content declaration must start a sentence or carry a colon. Matching
+    # it anywhere cut "Aqua, Glycerin, Contains Nothing Extract 2%, Butylphenyl
+    # Methylpropional" down to two ingredients and lost the prohibited match
+    # after it.
+    r"|(?:^|[.\n]|:)\s*(?:contains?|contient|cont[eé]m|contiene|contien[ei]|"
+    r"inneholder|indeholder|enth[äa]lt|inneh[åa]ller|sis[äa]lt[äa][äa])\b"
     r"[^.\n]{0,90}?\d[\d.,]*\s*(?:ppm|%|mg)"
 )
 
@@ -97,9 +101,17 @@ _MAY_CONTAIN_WORDS = (
     r"may\s+contain|peut\s+contenir|kann\s+enthalten|puede\s+contener|"
     r"pu[òo]\s+contenere|pode\s+conter"
 )
+#: A bare marker only opens a shade-range block when it is bracketed, or the
+#: words follow it, or a colour index number does. "Glycerin +/- 0.5%" and
+#: "pH 5.5 +/- 0.5" are ordinary label text, and reading either as the start of
+#: a shade-range block moved every declared ingredient after it out of both
+#: order-dependent checks while telling the reader only that the list "has a
+#: 'may contain' block".
 _MAY_CONTAIN = re.compile(
-    r"(?i)[\[(]?\s*" + _MARKER + r"\s*[\])]?\s*"
+    r"(?i)[\[(]\s*" + _MARKER + r"\s*[\])]?\s*"
     r"(?:\b(?:" + _MAY_CONTAIN_WORDS + r")\b\s*[:\-]?\s*)?"
+    r"|" + _MARKER + r"\s*(?=\s*c\.?\s?[il]\.?\s*\d{5})"
+    r"|" + _MARKER + r"\s*(?:\b(?:" + _MAY_CONTAIN_WORDS + r")\b\s*[:\-]?\s*)"
     r"|\b(?:" + _MAY_CONTAIN_WORDS + r")\b\s*[:\-]?\s*"
 )
 
@@ -110,6 +122,9 @@ _BLEND = re.compile(r"(?i)\s*\((?:and|et|und)\)\s*")
 _ANNOTATION = re.compile(
     r"(?:\b\d+(?:[.,]\d+)?\s*%(?:\s*(?:min|max|w/w|v/v))?\.?)"
     r"|(?:\b(?:min|max|approx\.?)\s*\d+(?:[.,]\d+)?\s*%)"
+    # A tolerance printed against a quantity: "Glycerin +/- 0.5%". Without
+    # this the percentage went and the "+/-" stayed on the name.
+    r"|(?:\s*(?:\+\s*/\s*-|\+/-|±)\s*(?=\s*\d|\s*$))"
 )
 _FOOTNOTE = re.compile(r"[*†‡°^•·]+")
 
@@ -158,7 +173,17 @@ def trim(block: str) -> tuple[str, str]:
     dropped instead of dropping it quietly. Used on both paths: a block handed
     straight to ``--ingredients`` needs this exactly as much as one found
     inside a whole label does, and for a while only the second one got it.
+
+    A leading "Ingredients:" is removed here too. A file handed to
+    ``--ingredients`` is very often copied straight off a pack and starts with
+    the word, and without this the first ingredient became "Ingredients:
+    Formaldehyde", matched nothing, and the run exited 0. The same text through
+    the whole-label path reported the prohibited match. Same file, opposite
+    answer, no warning.
     """
+    preamble = _PREAMBLE.match(block.lstrip())
+    if preamble is not None:
+        block = block.lstrip()[preamble.end() :]
     end = _TERMINATOR.search(block)
     inline = _INLINE_TERMINATOR.search(block)
     if inline is not None and (end is None or inline.start() < end.start()):
@@ -259,7 +284,17 @@ def _aliases(raw: str) -> tuple[tuple[str, str], ...]:
     stripped = _PARENTHETICAL.sub(" ", raw)
     stripped = re.sub(r"\s+", " ", stripped).strip(" .,;:-")
     if stripped and fold(stripped) != folded_raw:
-        forms.append((stripped, "whole"))
+        # Whether what is left is still the name depends on how much of the
+        # name it is. "Citrus Limon (Lemon) Peel Oil" keeps four words of five
+        # and is the INCI name; "Styrene (Acrylate Copolymer)" keeps one of
+        # three and is a fragment that matched the styrene monomer in Annex II.
+        # The rule is that the part outside the brackets must be at least half
+        # the words. It is the same test either way round, so "Chromium (CI
+        # 77288)" and "CI 77288 / CHROMIUM" now get the same answer; before,
+        # one was reported as prohibited and the other was not.
+        outside = len(stripped.split())
+        inside = sum(len(inner.split()) for inner in _PARENTHETICAL.findall(raw))
+        forms.append((stripped, "whole" if outside >= inside else "part"))
     # "CI 77891 / TITANIUM DIOXIDE" and "AQUA / WATER / EAU" are one entry
     # printed under two or three names. A slash with a space on both sides is
     # that convention; a slash without one is part of a single name, as in
@@ -403,5 +438,13 @@ def looks_binary(text: str) -> bool:
         return False
     if "\x00" in sample:
         return True
-    printable = sum(1 for ch in sample if ch.isprintable() or ch in "\t\n\r")
+    # U+FFFD counts against it. The file is read with errors="replace", so a
+    # non-UTF-8 binary with no NUL bytes arrives as a wall of replacement
+    # characters -- and str.isprintable() says every one of them is printable,
+    # so the old test called it a list and parsed ingredients out of it.
+    printable = sum(
+        1
+        for ch in sample
+        if (ch.isprintable() or ch in "\t\n\r") and ch != "\ufffd"
+    )
     return printable / len(sample) < 0.85

@@ -13,6 +13,7 @@ confident finding about a substance the label does not contain.
 
 from __future__ import annotations
 
+import csv
 import hashlib
 from dataclasses import dataclass
 from pathlib import Path
@@ -67,9 +68,19 @@ def _load_files(directory: Path, origin: str, verify: bool) -> Register:
                 "The vendored copy must not be edited. Delete it and "
                 "reinstall, or use --register to read a different directory."
             )
-        text = raw.decode("utf-8")
-        _, last_update = read_header_dates(text)
-        rows = read_annex(annex, text)
+        # A directory the user pointed at may hold anything. Letting the
+        # decode or the parse raise gave a traceback and exit 1 -- which is the
+        # code for "findings were reported" -- and the carefully worded message
+        # in read_annex about the export format having changed was never seen.
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise RegisterError(f"{path} is not UTF-8 text: {exc}") from exc
+        try:
+            _, last_update = read_header_dates(text)
+            rows = read_annex(annex, text)
+        except (ValueError, IndexError, csv.Error) as exc:
+            raise RegisterError(f"{path}: {exc}") from exc
         entries.extend(rows)
         info_annexes[annex] = (last_update, digest, len(rows))
 
