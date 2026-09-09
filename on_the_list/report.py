@@ -52,10 +52,21 @@ def _headline(report: Report) -> str:
         counts[finding.check] = counts.get(finding.check, 0) + 1
     if not counts:
         ran = [c.name for c in report.checks if c.ran]
-        return (
+        line = (
             f"{len(report.ingredients)} ingredients read. Nothing found by the "
             f"{len(ran)} check{'s' if len(ran) != 1 else ''} that ran."
         )
+        if report.considered:
+            # Without this the reader meets a "considered and not counted"
+            # section two lines after being told nothing was found, and has to
+            # work out for themselves that the two agree.
+            n = len(report.considered)
+            line += (
+                f" {n} ingredient{'s' if n != 1 else ''} did match an annex "
+                f"entry and {'were' if n != 1 else 'was'} deliberately not "
+                "counted; the reason is below."
+            )
+        return line
     parts = [f"{n} {name.replace('-', ' ')}" for name, n in counts.items()]
     return (
         f"{len(report.ingredients)} ingredients read. "

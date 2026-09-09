@@ -57,6 +57,13 @@ class AProhibitedNameIsReportedAsAMatchAndNotAsAVerdict(unittest.TestCase):
         self.assertEqual(len(report.considered), 1)
         self.assertIn("nanomaterial", report.considered[0].reason)
 
+    def test_a_clean_headline_admits_what_was_not_counted(self):
+        from on_the_list.report import render_text
+
+        text = render_text(run("Aqua, Styrene/Acrylates Copolymer, Glycerin"))
+        self.assertIn("Nothing found by the", text)
+        self.assertIn("deliberately not counted", text)
+
     def test_but_the_same_name_marked_nano_is_reported(self):
         report = run("Aqua, Styrene/Acrylates Copolymer (nano), Glycerin")
         self.assertEqual(len(checks_of(report, "prohibited")), 1)
