@@ -7,6 +7,10 @@ Runs entirely on your machine. No account, no API key, no upload, no
 dependencies beyond Python itself. The annexes are shipped with the package;
 downloading a fresh copy is a separate command you have to type.
 
+What came back when it was pointed at 16,635 real published labels, including
+the checks it gets wrong and how often, is written up in
+[An ingredient list cannot tell you most of what you want to know](https://medium.com/@aryawaiga0/an-ingredient-list-cannot-tell-you-most-of-what-you-want-to-know-f3807f357837).
+
 ```
 $ on-the-list examples/shade-stick.txt
 
