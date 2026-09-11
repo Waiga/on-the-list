@@ -250,29 +250,21 @@ colourants after the other ingredients but does not *require* it, so a colourant
 in weight order is not necessarily out of place. The check reports where a name
 is printed and nothing more.
 
-**repeated-entry — 16 of 30 wrong.** Thirty findings from the same draw, read
-the same way. This is the weakest check in the tool and the number is not a
-typo.
+> **Correction, 11 September 2026.** An earlier version described 16 of 30
+> repeated entry findings as false positives and presented 53 percent as if it
+> described the corpus. The row level evidence for that statement was incomplete.
+> A fresh audit of the same seeded sample found 21 false positives and 9 findings
+> that correctly described a repeated normalized name in the recorded text. This
+> is a result for 30 sampled findings. It is not a rate for the full corpus, all
+> repeated entry findings, clean single product lists, or future inputs.
 
-Eight of the sixteen are **multi-component packs**: a hair colour kit declaring
-the crème, the developer and the conditioner in one field; a 2-in-1 shampoo. An
-ingredient appearing once in each component is not a repeated ingredient. The
-other eight are fields that are not one product's ingredient list at all — an
-alphabetical glossary of every ingredient a brand uses, a food supplement, a
-certification mark parsed as an ingredient, and OCR damage that split one name
-into two.
-
-The tool detects the multi-component case when the pack prints a heading it can
-see — `Gel N°1:`, `MASQUE:`, a second `Ingredients:` — and then says so and does
-not run either order-dependent check. It flagged 1,631 of the 16,635 labels that
-way. It cannot detect it when the pack prints no heading, which is most of the
-time, and no heuristic tried here improved that materially without losing real
-findings.
-
-**On a single product's own ingredient list — which is what the tool is for —
-none of the sixteen failure modes applies.** All twelve sound findings in the
-same sample were single-product lists. The corpus number is still the honest one
-to publish, and it is 53%.
+The 21 false positives comprised nine multi product or multi component fields,
+seven OCR, transcription, or parser artifacts, and five fields that were not one
+cosmetic ingredient declaration. The 9 sound findings correctly described a
+repeated normalized name in the historical recorded text. Not every row had a
+usable package image, and two sound rows were different barcodes carrying the
+same recorded formula. The [row level audit](docs/audits/repeated-entry-audit.md)
+records the judgment and evidence basis for every finding.
 
 **warning-wording — not measured.** Open Beauty Facts carries no field holding
 the text printed on a pack, so every finding in the corpus run is a gap by
