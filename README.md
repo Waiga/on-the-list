@@ -7,8 +7,8 @@ Runs entirely on your machine. No account, no API key, no upload, no
 dependencies beyond Python itself. The annexes are shipped with the package;
 downloading a fresh copy is a separate command you have to type.
 
-What came back when it was pointed at 16,635 real published labels, including
-the checks it gets wrong and how often, is written up in
+What came back when it was pointed at 16,635 real published labels, together
+with the hand audits and their limits, is written up in
 [An ingredient list cannot tell you most of what you want to know](https://medium.com/@aryawaiga0/an-ingredient-list-cannot-tell-you-most-of-what-you-want-to-know-f3807f357837).
 
 ```
@@ -186,7 +186,8 @@ Facts export — real packs, real messiness, none of it written by this project.
 The selection rule is every record in the export whose `ingredients_text` field
 is at least 50 characters. Nothing else is filtered or sampled.
 
-`tools/measure_corpus.py` is the script that produced every number here.
+`tools/measure_corpus.py` produces the automated corpus counts and redraws the
+seeded samples described here. Human review produces the audit judgments.
 
 | | |
 |---|---|
@@ -205,22 +206,24 @@ is at least 50 characters. Nothing else is filtered or sampled.
 | Labels with pack prose inside the ingredient panel | 4,288 (25.8%) |
 | Labels whose ingredient field carries a section heading | 1,631 (9.8%) |
 
-Every one of those comes out of `tools/measure_corpus.py`, including the
-per-entry and per-statement breakdowns quoted below. `--samples` draws the
-audit samples with the seed and size the manifest names.
+Those automated counts come out of `tools/measure_corpus.py`, including the
+per-entry and per-statement breakdowns quoted below. `--samples` redraws the
+seeded selections with the seed and size the manifest names. The judgments do
+not come from the script.
 
-### How wrong each check is
+### What the hand audits found
 
 Hand-audited against the published annex text or the label's own list. These
 are the numbers, not a summary of them.
 
-**prohibited — 9.3% wrong on the unconditional group.** All 19 Annex II entries
-behind the 1,066 unconditional findings were read against the annex text.
-Eighteen are correct: Butylphenyl Methylpropional (651 findings), Zinc
+**prohibited.** All 19 Annex II entries behind the 1,066 unconditional findings
+in the pinned corpus group were read against the annex text. One overbroad
+mapping was responsible for 99 of those findings. The other 18 mappings were
+supported: Butylphenyl Methylpropional (651 findings), Zinc
 Pyrithione (105), Hydroxyisohexyl 3-Cyclohexene Carboxaldehyde (100),
 Pentasodium Pentetate (65), Ergocalciferol and Cholecalciferol (11), borates
 (7), 4-Methylbenzylidene Camphor (5), Formaldehyde (4), and a tail of one to
-three each. One is wrong, and it is the tool's largest single known false
+three each. The overbroad mapping is the tool's largest single known false
 positive: **Annex II entry 1388 is `Octamethylcyclotetrasiloxane; D4`, and the
 Commission's own identified-ingredients column gives its INCI name as
 `CYCLOMETHICONE`**. Cyclomethicone names a *mixture* of cyclic siloxanes, so a
@@ -242,7 +245,7 @@ read against the label's own list. Two failures are pack prose that the parser
 kept — Spanish marketing copy after the colourants, and an OCR'd panel where
 the list has no commas at all. One is a make-up palette declaring several
 shades in one field. One is an OCR'd label whose text before `INGREDIENTS` is
-unreadable.
+unreadable. This sample result is not a population rate.
 
 The underlying weakness is deeper than that rate suggests, and it is stated in
 [`docs/limitations.md`](docs/limitations.md): the Regulation *permits*
@@ -266,10 +269,10 @@ usable package image, and two sound rows were different barcodes carrying the
 same recorded formula. The [row level audit](docs/audits/repeated-entry-audit.md)
 records the judgment and evidence basis for every finding.
 
-**warning-wording — not measured.** Open Beauty Facts carries no field holding
-the text printed on a pack, so every finding in the corpus run is a gap by
-construction and the rate means nothing. What the run does establish is that the
-check fires on the right population: of the 1,170 findings, 692 are
+**warning-wording: accuracy not measured.** Open Beauty Facts carries no field
+holding the text printed on a pack, so every finding in the corpus run is a gap
+by construction and there is no accuracy result. What the run does establish is
+that the check fires on the right population: of the 1,170 findings, 692 are
 `Contains sodium fluoride` on fluoride toothpastes, 132
 `Contains sodium monofluorophosphate`, 127 `Contains hydrogen peroxide` on
 developers, 93 `Contains ammonia` on hair colour and 48

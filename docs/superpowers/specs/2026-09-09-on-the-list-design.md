@@ -2,6 +2,16 @@
 
 9 September 2026.
 
+> **Correction, 11 September 2026.** The original design overstated the
+> repeated entry evaluation by treating an incompletely recorded sample result
+> as a corpus rate. A fresh row level audit of the same seeded sample found 21
+> false positives and 9 findings that correctly described a repeated normalized
+> name in the historical recorded text. This is a result for 30 sampled
+> findings, not a population rate. Not every sound row had a usable package
+> image, and two sound rows are different barcodes with the same recorded
+> formula. The public [row level audit](../../audits/repeated-entry-audit.md)
+> records every judgment and evidence basis.
+
 ## What it is
 
 A command-line tool that reads a cosmetic ingredient list and reports what
@@ -180,8 +190,8 @@ filter and an opacifier; its position says nothing about which.
 
 The derogation is permissive, not mandatory, so a colourant in weight order is
 not necessarily misplaced. The finding says where a name is printed and prints
-the hair-dye and sub-1% caveats with it. This is the tool's second-weakest
-check and the README says so.
+the hair-dye and sub-1% caveats with it. A seeded review judged 4 of 30 findings
+wrong. That sample result is not a population rate.
 
 ### 3. repeated-entry
 
@@ -264,10 +274,10 @@ rather than an error, and none was visible from the unit tests:
 - a tenth of it holding more than one product's list, now detected where a
   heading exists and used to suppress both order-dependent checks.
 
-Two things the measurement did **not** fix, and which are published rather than
-patched: the Cyclomethicone/D4 false positive (99 findings, 9.3% of the
-unconditional prohibited group), and the repeated-entry check's 53% error rate,
-most of it on fields that hold more than one product's list.
+Two limitations remain published rather than patched. The Cyclomethicone/D4
+mapping was responsible for 99 of 1,066 unconditional findings in the pinned
+corpus group. The repeated entry audit found 21 false positives and 9 sound
+findings in a seeded sample of 30. The sample result is not a population rate.
 
 ## What was considered and rejected
 
@@ -279,14 +289,16 @@ confident false claims against a prohibited-substances list. Not worth it.
 
 **An exception list for Cyclomethicone and the other known false positives.**
 This would be tuning the tool against the single corpus it was measured on, and
-it would make the published rate a description of the tuning rather than of the
-tool.
+it would make the published corpus result a description of the tuning rather
+than of the tool.
 
-**Removing the repeated-entry check.** Its 50% corpus error rate is entirely
-attributable to inputs that are not one product's list, which is not the input
-the tool is for. Removing it would lose a check that is sound on its intended
-input; keeping it silently would be dishonest. It is kept, and the rate and its
-cause are published.
+**Removing the repeated-entry check.** The fresh audit found both false
+positives and sound findings in the seeded sample. False positives came from
+multi product or multi component fields, OCR, transcription, or parser
+artifacts, and fields that were not one cosmetic ingredient declaration.
+Removing the check would lose supported literal repeated name findings.
+Keeping it without the bounded sample result and its causes would be dishonest,
+so both are published.
 
 **Language-specific heuristics for splitting multi-component packs.** Several
 were tried. Each either caught almost nothing more or suppressed real findings.

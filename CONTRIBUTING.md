@@ -41,10 +41,11 @@ The reasoning is in `docs/superpowers/specs/2026-09-09-on-the-list-design.md`.
 not 0: "nothing found" about a comparison that never happened is the one
 sentence this tool must never print.
 
-**A rate that is bad gets published, not tuned.** Two of the four checks have
-error rates in the README that would be easy to improve by raising a threshold
-against the corpus they were measured on. Do not. If a change improves a rate,
-the pull request has to say why it is a correctness fix and not a fit.
+**Evaluation types stay separate.** Published evaluations must distinguish
+fixed corpus counts, exhaustive reviews, seeded sample judgments, and
+unmeasured checks. A sample result must not be presented as a population rate.
+If a change improves a measured result, the pull request has to say why it is a
+correctness fix and not a fit to one dataset.
 
 **No check may depend on a concentration.** A label does not state one.
 
@@ -83,11 +84,12 @@ Never hand-edit a CSV. The value of the vendored copy is that a stranger can
 
 ## Measuring
 
-Any claim about how well a check works has to come from
-`tools/measure_corpus.py` over a corpus whose source, date and hash are recorded
-in `docs/corpus-manifest.md`. A rate that improved because the tool was tuned
-against the corpus it is measured on is not an improvement; say what changed and
-why it is a correctness fix rather than a fit to one dataset.
+Automated corpus claims have to come from `tools/measure_corpus.py` over a
+corpus whose source, date and hash are recorded in `docs/corpus-manifest.md`.
+The script produces counts and seeded sample selections. Human review produces
+the audit judgments. A result that improved because the tool was tuned against
+the corpus it is measured on is not an improvement; say what changed and why it
+is a correctness fix rather than a fit to one dataset.
 
 If a check turns out to be useless, the change that establishes that should
 either remove it or say plainly in the README that it is useless. Quietly
@@ -98,8 +100,8 @@ exists to prevent.
 
 `docs/limitations.md` lists what the tool cannot do. Several entries there are
 gaps someone could close: names the Commission writes differently from a pack,
-OCR forms not yet recognised, and the multi-component-pack problem behind the
-repeated-entry check's error rate.
+OCR forms not yet recognised, and the multi-component-pack problem behind many
+known repeated entry false positives.
 
 ## Review expectations
 
