@@ -1,3 +1,3 @@
 """Report what the EU cosmetic annexes say about the ingredients on a list."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
