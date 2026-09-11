@@ -1,8 +1,9 @@
 # Manifest
 
-Every number published about this tool was produced against the exact material
-described here. The point of the hashes is that you can obtain the same files
-and check, and that when one of them changes you can tell.
+This manifest identifies the exact inputs used for automated corpus counts and
+seeded sample selection. The hashes let you verify whether files you obtained
+match the recorded inputs. Human judgments and their evidence are recorded in
+the relevant audit record.
 
 ## The register: CosIng Annexes II to VI
 
@@ -100,20 +101,19 @@ shasum -a 256 en.openbeautyfacts.org.products.csv.gz
 python3 tools/measure_corpus.py en.openbeautyfacts.org.products.csv.gz
 ```
 
-`tools/measure_corpus.py` prints **every number published about this tool** as
-JSON, including the register hashes it ran against, so a result carries its own
-provenance: the totals, the conditional/unconditional split, the per-annex-entry
-counts behind the prohibited findings, the per-statement counts behind the
-warning findings, the exclusions, and the counts of labels carrying pack prose
-or a section heading.
+`tools/measure_corpus.py` produces the automated corpus counts and redraws the
+seeded samples described here. Human review produces the audit judgments.
 
-For a while it printed about half of them and the rest could only be obtained by
-writing your own script against `analyse()`, which made "the script that
-produced every number here" false. It is true now.
+The JSON output includes the register hashes, totals, the
+conditional/unconditional split, the per-annex-entry counts behind the
+prohibited findings, the per-statement counts behind the warning findings, the
+exclusions, and the counts of labels carrying pack prose or a section heading.
+Reproduction requires the pinned export above and measurement code revision
+`f72f866974a8f5a4af27a22ac33d0fbae94c5227`.
 
-Add `--samples out.json` to draw the audit samples below. The defaults are the
-ones those audits used — seed 11, thirty findings, one row per label — so they
-can be redrawn exactly.
+Add `--samples out.json` to redraw the seeded selections below. The defaults are
+the ones those audits used: seed 11, thirty findings, one row per label. This
+reproduces sample selection, not the human judgments.
 
 Open Beauty Facts is republished daily. The hash above is how you can tell
 whether you have the file these numbers came from. If you do not, expect the
@@ -129,25 +129,31 @@ warning-wording check's accuracy is untested. See `docs/limitations.md`.
 
 ## The hand audits
 
-Three samples were read by hand against the underlying documents. Each is
-reproducible from the corpus above.
+Three review bases are recorded below. The measurement script can redraw the
+two seeded samples. It does not reproduce the human judgments.
 
-| Check | Sample | Method | Wrong |
-|---|---|---|---|
-| prohibited | all 19 Annex II entries behind the 1,066 unconditional findings | each entry's chemical name read against the annex text | 1 entry, 99 findings (9.3%) |
-| colourant-order | 30 findings, `--samples` at the default seed and size | each read against the label's own printed list | 4 (13%) |
-| repeated-entry | 30 findings, same draw | same | 16 (53%) |
+| Check | Review basis | Result |
+|---|---|---|
+| prohibited | All 19 Annex II entries behind 1,066 unconditional findings | One overbroad mapping accounted for 99 findings |
+| colourant order | Seeded sample of 30 findings | 4 findings were judged wrong |
+| repeated entry | Seeded sample of 30 findings | 21 false positives and 9 sound findings |
+| warning wording | The corpus lacks real warning text from packs | Accuracy not measured |
+
+The sample results are not population rates. Human judgments are recorded
+separately from the automated sample selection. The repeated entry judgments
+and evidence are in the [row level audit](audits/repeated-entry-audit.md).
 
 The prohibited audit is exhaustive over entries rather than sampled over
 findings, because 19 entries account for all 1,066 unconditional findings and
 reading 19 annex rows settles every one of them.
 
-Redraw the two samples with:
+Redraw the two seeded selections with:
 
 ```bash
 python3 tools/measure_corpus.py <export> --samples audit.json
 ```
 
-The draw is deduplicated by label and seeded at 11, so the same export gives the
-same thirty findings per check. A different export will not: Open Beauty Facts
-is republished daily, and the hash above is how you tell.
+The draw is deduplicated by label and seeded at 11, so the same export and the
+pinned measurement revision give the same thirty selected findings per check.
+A different export will not: Open Beauty Facts is republished daily, and the
+hash above is how you tell. Human review is still required for the judgments.

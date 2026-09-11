@@ -141,17 +141,17 @@ Measured on 30 hand-audited findings: 4 wrong. Two are pack prose the parser
 kept, one is a make-up palette declaring several shades in one field, and one is
 an OCR'd label whose text before the word `INGREDIENTS` is unreadable.
 
-## Why the repeated-entry check is the weakest one
+## What the repeated entry audit found
 
-Measured on 30 hand-audited findings: **16 wrong.**
+A fresh row level audit of the same seeded sample found 21 false positives and
+9 findings that correctly described a repeated normalized name in the
+historical recorded text. This is a result for 30 sampled findings. It is not a
+population rate for the 16,635 label corpus, all repeated entry findings, clean
+single product lists, or future inputs.
 
-Eight held more than one product's list — a hair colour kit's crème, developer
-and conditioner in one field, a 2-in-1 shampoo. An ingredient appearing once in
-each component is not a repeated ingredient.
-
-The other eight were not one product's ingredient list at all: an alphabetical
-glossary of every ingredient a brand uses, a food supplement, a certification
-mark parsed as an ingredient, and OCR damage that split one name into two.
+The 21 false positives comprised nine multi product or multi component fields,
+seven OCR, transcription, or parser artifacts, and five fields that were not
+one cosmetic ingredient declaration.
 
 The tool detects this when the pack prints a heading it can recognise: a short
 label ending in a colon that is not itself an ingredient-list preamble or a
@@ -159,14 +159,19 @@ warning-panel word, or a second `Ingredients:`. When it finds one, it says so
 and does not run either order-dependent check. On the corpus it flagged 1,631 of
 16,635 labels that way.
 
-It cannot detect a component boundary the pack does not print, which is the
-common case. Several heuristics were tried and each either missed almost as much
-or suppressed real findings; none is in the tool.
+It cannot detect a component boundary the pack does not print. Several
+heuristics were tried and each either missed almost as much or suppressed real
+findings; none is in the tool.
 
-On a single product's own ingredient list — which is what the tool is for — the
-check is sound. All twelve correct findings in the audited sample were
-single-product lists. The corpus figure is still the honest one, because a user
-cannot be assumed to know which kind of input they have.
+Several sound rows did not have a usable package image. They are sound against
+the historical recorded text, not visually confirmed on pack. Two sound rows
+are different barcodes with the same recorded formula, so they are not
+independent formulations. One sound row is boundary sensitive because its
+second occurrence is inside a supplier blend. That row supports the literal
+repeated normalized name statement, not a formulation duplication claim.
+
+The [row level audit](audits/repeated-entry-audit.md) records the judgment and
+evidence basis for every finding.
 
 ## Why the warning check looks for so little
 

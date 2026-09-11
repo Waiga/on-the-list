@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Run on-the-list over an Open Beauty Facts export and report what happened.
 
-This is the script behind every corpus number in the README. It is here so that
-the measurement can be re-run rather than believed.
+This script produces automated corpus counts and seeded sample selection. Human
+review, not this script, produces the audit judgments.
 
     curl -sO https://static.openbeautyfacts.org/data/en.openbeautyfacts.org.products.csv.gz
     shasum -a 256 en.openbeautyfacts.org.products.csv.gz
@@ -11,7 +11,11 @@ the measurement can be re-run rather than believed.
 The export is Open Database Licence 1.0, which is share-alike and therefore
 incompatible with redistributing a filtered subset inside an MIT repository. It
 is not vendored here. Only the measurements are published, and the hash above
-is how you check you have the same file.
+is how you check you have the same file. The pinned export SHA256 is
+``d527f033d2549b86424db0ef1e87b785f92f53901036afd0c0a24bd629a766a5``.
+Reproducing the published automated counts and seeded selections also requires
+measurement code revision
+``f72f866974a8f5a4af27a22ac33d0fbae94c5227``.
 
 Selection rule, applied to every record in the export: keep it if its
 ``ingredients_text`` field is at least 50 characters. Nothing else is filtered,
@@ -54,8 +58,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("export", type=Path)
     parser.add_argument("--samples", type=Path, help="write a sample of findings here")
-    # The defaults are the ones docs/corpus-manifest.md describes for the hand
-    # audits, so the samples in that document can be redrawn exactly.
+    # The defaults select the seeded samples described in the corpus manifest.
+    # The script redraws those rows but does not reproduce human judgments.
     parser.add_argument("--sample-size", type=int, default=30)
     parser.add_argument("--seed", type=int, default=11)
     args = parser.parse_args()
@@ -69,10 +73,8 @@ def main() -> int:
     ingredient_count = 0
     per_check = Counter()
     labels_with = Counter()
-    # Everything the README publishes, so that a reader following the manifest
-    # gets all of it and not half of it. Six rows of the README table and every
-    # per-entry and per-statement count used to be obtainable only by writing
-    # your own script against analyse().
+    # Automated corpus counts published in the README and manifest. Human audit
+    # judgments are recorded separately and are not produced here.
     prohibited_by_condition = Counter()
     labels_by_condition = Counter()
     prohibited_by_entry = Counter()
@@ -202,9 +204,9 @@ def main() -> int:
     print(json.dumps(summary, indent=2))
 
     if args.samples:
-        # One row per label, not per finding. The audits in
-        # docs/corpus-manifest.md were drawn from a deduplicated list, and a
-        # sample that can draw the same label twice is not the same sample.
+        # One row per label, not per finding. The seeded selections in
+        # docs/corpus-manifest.md were drawn from a deduplicated list. Human
+        # review is required to turn these selected rows into audit judgments.
         rng = random.Random(args.seed)
         drawn = {}
         for check, rows in samples.items():
