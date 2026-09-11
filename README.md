@@ -65,10 +65,11 @@ That is not modesty. It is the only claim the evidence supports.
 ## Install
 
 ```bash
-pip install .
+pip install on-the-list
 ```
 
-Python 3.11 or newer. Nothing else.
+Python 3.11 or newer. Nothing else. To install from a clone instead, `pip install .`
+from the repository root.
 
 ## Use
 
