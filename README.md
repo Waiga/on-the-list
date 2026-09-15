@@ -14,7 +14,7 @@ with the hand audits and their limits, is written up in
 ```
 $ on-the-list examples/shade-stick.txt
 
-on-the-list 0.1.1 — examples/shade-stick.txt
+on-the-list 0.1.2 — examples/shade-stick.txt
 CosIng annexes II-VI, Commission last update 28/08/2026, 1913 distinct names,
 read from the copy shipped with this package
 
@@ -50,7 +50,7 @@ no `unknown` and no `unrecognised` anywhere in the output.
 
 This is the most likely way to misread the tool, which is why it is the first
 thing on the page. The reasoning is set out in full in
-[`docs/superpowers/specs/2026-09-09-on-the-list-design.md`](docs/superpowers/specs/2026-09-09-on-the-list-design.md).
+[`docs/superpowers/specs/2026-09-09-on-the-list-design.md`](https://github.com/Waiga/on-the-list/blob/main/docs/superpowers/specs/2026-09-09-on-the-list-design.md).
 
 ## What it does not do
 
@@ -102,13 +102,13 @@ never read as a check that found nothing.
 | **prohibited** | An ingredient's name matches an entry in **Annex II**. Reported as a match with the entry number, split into entries that say something unconditional about the substance and entries whose own wording sets a condition. |
 | **colourant-order** | A `CI NNNNN` colourant is printed before a non-colourant. Article 19(1)(g) allows colourants in any order *after* the other ingredients, so this is a positional observation with no judgement in it. |
 | **repeated-entry** | The same name appears twice in the declared list. Needs no register at all. |
-| **warning-wording** | An annex attaches a `Contains …` statement to an ingredient on the list, and that statement is not in the pack text you supplied. Reported as a **gap between two documents**, never as a violation: the wording may be printed somewhere the supplied text does not cover, in another language, or the entry's condition may not apply. It needs pack text to search — a whole label file counts as that, `--ingredients` on its own does not — and it says which when it does not run. |
+| **warning-wording** | An annex attaches a `Contains …` statement to an ingredient on the list, and that statement is not in the pack text you supplied. Reported as a **gap between two documents**, never as a violation: the wording may be printed somewhere the supplied text does not cover, in another language, or the entry's condition may not apply. It needs pack text to search. A whole label file counts as that and `--ingredients` on its own does not. It says which when it does not run. |
 
 Two things that are not checks and change no exit code:
 
 **What the annexes name.** Every entry in Annexes II to VI that names an
-ingredient on the list, with what that annex is — prohibited, restricted, a
-permitted colourant, preservative or UV filter — and the product types the entry
+ingredient on the list, with what that annex is (prohibited, restricted, a
+permitted colourant, preservative or UV filter) and the product types the entry
 is limited to. This is the tool's own title, and for a while it was the one
 thing the report did not print: a label containing Phenoxyethanol produced no
 finding, and the reader was told one of three ingredients was named somewhere
@@ -127,7 +127,7 @@ unambiguous.
 
 **Only `Contains …` statements are searched for in pack text.** The annexes'
 wording column mixes label text with conditions that have nothing to do with a
-label — *"Purity criteria as set out in Commission Directive 95/45/EC (E 129)"*,
+label: *"Purity criteria as set out in Commission Directive 95/45/EC (E 129)"*,
 *"Only nanomaterials having the following characteristics are allowed"*.
 Treating the whole column as label text would report a missing warning on every
 sunscreen containing zinc oxide. 38 of the 627 entries in Annexes III to VI
@@ -139,8 +139,8 @@ not searched for, and the report says so.
 fragment `CHROMIUM` matches the Annex II entry for chromium metal. Over 16,635
 real labels, fragment matches produced no correct Annex II finding at all, so
 they are shown under *considered and not counted* with the reason instead. A
-name with a bracketed aside removed — `Titanium Dioxide (nano)` → `Titanium
-Dioxide` — is still the name of the ingredient, and does match.
+name with a bracketed aside removed (`Titanium Dioxide (nano)` → `Titanium
+Dioxide`) is still the name of the ingredient, and does match.
 
 **Nothing is built on a concentration.** A label does not state one. Every
 maximum-concentration column in the annexes is unused.
@@ -176,13 +176,13 @@ exists. `on-the-list update-register` downloads the current files; the report
 then names the new hashes instead.
 
 Full manifest, including the corpus used for the measurements below:
-[`docs/corpus-manifest.md`](docs/corpus-manifest.md).
+[`docs/corpus-manifest.md`](https://github.com/Waiga/on-the-list/blob/main/docs/corpus-manifest.md).
 
 ## Measured against real labels
 
 Unit tests pass on the inputs their author imagined, which proves very little.
 This was run over **16,635 real published cosmetic labels** from an Open Beauty
-Facts export — real packs, real messiness, none of it written by this project.
+Facts export: real packs, real messiness, none of it written by this project.
 The selection rule is every record in the export whose `ingredients_text` field
 is at least 50 characters. Nothing else is filtered or sampled.
 
@@ -197,8 +197,8 @@ seeded samples described here. Human review produces the audit judgments.
 | Crashes | 0 |
 | Ingredients parsed | 298,423 |
 | **Annex II matches** | **2,408** on 2,037 labels |
-| — where the annex entry is unconditional | 1,066 on 942 labels |
-| — where the annex entry sets a condition | 1,342 on 1,167 labels |
+| of which the annex entry is unconditional | 1,066 on 942 labels |
+| of which the annex entry sets a condition | 1,342 on 1,167 labels |
 | Colourant position | 975 on 645 labels |
 | Repeated entries | 712 on 291 labels |
 | Warning wording not found | 1,170 on 1,027 labels |
@@ -239,16 +239,16 @@ normal content in natural essences used"*, and the colourants prohibited only
 *"when used as a substance in hair dye products"*. Each is printed with its own
 wording so a reader can see the condition and decide.
 
-**colourant-order — 4 of 30 wrong.** Thirty findings drawn by
+**colourant-order: 4 of 30 wrong.** Thirty findings drawn by
 `tools/measure_corpus.py --samples out.json` (seed 11, one row per label), each
 read against the label's own list. Two failures are pack prose that the parser
-kept — Spanish marketing copy after the colourants, and an OCR'd panel where
+kept: Spanish marketing copy after the colourants, and an OCR'd panel where
 the list has no commas at all. One is a make-up palette declaring several
 shades in one field. One is an OCR'd label whose text before `INGREDIENTS` is
 unreadable. This sample result is not a population rate.
 
 The underlying weakness is deeper than that rate suggests, and it is stated in
-[`docs/limitations.md`](docs/limitations.md): the Regulation *permits*
+[`docs/limitations.md`](https://github.com/Waiga/on-the-list/blob/main/docs/limitations.md): the Regulation *permits*
 colourants after the other ingredients but does not *require* it, so a colourant
 in weight order is not necessarily out of place. The check reports where a name
 is printed and nothing more.
@@ -266,7 +266,7 @@ seven OCR, transcription, or parser artifacts, and five fields that were not one
 cosmetic ingredient declaration. The 9 sound findings correctly described a
 repeated normalized name in the historical recorded text. Not every row had a
 usable package image, and two sound rows were different barcodes carrying the
-same recorded formula. The [row level audit](docs/audits/repeated-entry-audit.md)
+same recorded formula. The [row level audit](https://github.com/Waiga/on-the-list/blob/main/docs/audits/repeated-entry-audit.md)
 records the judgment and evidence basis for every finding.
 
 **warning-wording: accuracy not measured.** Open Beauty Facts carries no field
@@ -325,7 +325,7 @@ or by reading the annexes against their own text:
   prohibited check can only see 18% of the prohibited list.
 - **A file handed to `--ingredients` usually starts with the word
   "Ingredients:".** It was not stripped on that path, so the first ingredient
-  became `Ingredients: Formaldehyde`, matched nothing, and the run exited 0 —
+  became `Ingredients: Formaldehyde`, matched nothing, and the run exited 0,
   while the same text through the whole-label path reported the match.
 - **`Chromium (CI 77288)` was reported as prohibited and `CI 77288 / CHROMIUM`
   was not.** Same substance, two print orders, opposite answers. What survives a
@@ -338,8 +338,8 @@ or by reading the annexes against their own text:
 - **A colourant found only in Annex II was described as "listed in Annex IV".**
   Four are: CI 12150, CI 20170, CI 27290 and CI 45425, each prohibited in hair
   dye. The finding now names the entries the register actually holds.
-- **A malformed `--register` directory raised a traceback and exited 1** — the
-  code for "findings were reported" — and the message about the Commission
+- **A malformed `--register` directory raised a traceback and exited 1**, which is the
+  code for "findings were reported", and the message about the Commission
   having changed the export format was unreachable.
 - **`--skip` on all four checks exited 0.** Nothing was compared, and the report
   said "nothing found".
@@ -352,7 +352,7 @@ same file.
 ## What it misses
 
 Stated plainly, because a checking tool that hides its blind spots is worse than
-none. The long version is in [`docs/limitations.md`](docs/limitations.md).
+none. The long version is in [`docs/limitations.md`](https://github.com/Waiga/on-the-list/blob/main/docs/limitations.md).
 
 - **It sees 18% of Annex II.** Most rows have no INCI name, so most prohibited
   substances cannot be matched against a label at all.
@@ -364,8 +364,8 @@ none. The long version is in [`docs/limitations.md`](docs/limitations.md).
   substring search, no edit distance. A misspelling, a supplier's trade name, or
   a name the Commission writes differently will not match, and the tool will not
   tell you it missed one. It does look a printed name up under a bracketed or
-  slash-separated part of itself — that is how `CI 77891` is found inside
-  `Titanium Dioxide (CI 77891)` — but **only the Annex II check refuses a match
+  slash-separated part of itself (that is how `CI 77891` is found inside
+  `Titanium Dioxide (CI 77891)`), but **only the Annex II check refuses a match
   found that way**; the other checks and the coverage count accept it.
 - **It reads five annexes.** Annex I (the safety report) and Annex VII are not
   read, and neither is any national requirement, retailer standard, or rule
