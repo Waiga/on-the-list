@@ -167,10 +167,20 @@ Annex II — list of substances prohibited in cosmetic products
 ```
 
 ```bash
-curl -s https://api.tech.ec.europa.eu/cosing20/1.0/api/annexes/II/export-csv | shasum -a 256
+curl -s https://api.tech.ec.europa.eu/cosing20/1.0/api/annexes/II/export-csv \
+  | grep -v "File creation date" | grep -v "Last update" | shasum -a 256
 ```
 
-If that hash no longer matches, the Commission has republished the annex, and a
+That prints `673b909e2c588d211994723e3133d621c41cc430c4e4306815a28e4ec47f7b71`,
+and the copy shipped with this package gives the same value under the same two
+filters.
+
+Those two lines have to come out before the comparison means anything. The
+Commission stamps each download with the date it was generated, so hashing the
+file exactly as downloaded produces a different value every day and never
+matches the digest printed above, which is the digest of the file as shipped.
+
+If the filtered hashes differ, the substance of the annex has changed, and a
 result produced against the old one is a result about a document that no longer
 exists. `on-the-list update-register` downloads the current files; the report
 then names the new hashes instead.
