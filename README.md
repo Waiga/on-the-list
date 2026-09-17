@@ -14,7 +14,7 @@ with the hand audits and their limits, is written up in
 ```
 $ on-the-list examples/shade-stick.txt
 
-on-the-list 0.1.2 — examples/shade-stick.txt
+on-the-list 0.1.3 — examples/shade-stick.txt
 CosIng annexes II-VI, Commission last update 28/08/2026, 1913 distinct names,
 read from the copy shipped with this package
 
