@@ -69,8 +69,8 @@ on-the-list update-register --into on_the_list/data
 on-the-list register          # read the new hashes and dates
 ```
 
-Then update `registry_manifest.py` — filename, hash, size, dates, row count —
-and re-run the suite. `tests/test_register.py` asserts every derived count that
+Then update `registry_manifest.py` with the filename, hash, size, dates and row
+count, and re-run the suite. `tests/test_register.py` asserts every derived count that
 `docs/corpus-manifest.md` publishes: 1,913 distinct names, 147 colour index
 numbers, 314 named rows of Annex II's 1,758, 627 entries in Annexes III to VI,
 38 of them yielding a `Contains …` statement, and 35 distinct statements. If any

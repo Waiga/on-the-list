@@ -1,4 +1,4 @@
-# on-the-list — design
+# on-the-list design
 
 9 September 2026.
 
@@ -61,8 +61,8 @@ because nothing restricts them. Both words do occur elsewhere in the text --
 ingredient, which is what a lookup asks.
 
 A validity check built on these annexes would therefore flag almost every
-ingredient of almost every product. Softening it — flagging only "unusual"
-absences — would be worse, because it would be a guess dressed as a check.
+ingredient of almost every product. Softening it, by flagging only "unusual"
+absences, would be worse, because it would be a guess dressed as a check.
 
 There is no public alternative source. The INCI dictionary is published by the
 Personal Care Products Council and is proprietary; there is no redistributable
@@ -111,14 +111,14 @@ and its last-update date, the annex title, and a spanning group header.
 `Name of Common Ingredients Glossary` (and its Annex IV variant
 `Colour index Number / Name of Common Ingredients Glossary`) separates names
 with `;` and `/`, never a comma. `Identified INGREDIENTS or substances e.g.`
-separates with commas — but chemical names contain commas of their own:
+separates with commas, but chemical names contain commas of their own:
 `N,N-DIETHYL-m-AMINOPHENOL`, `1,3-Bis(hydroxymethyl)-3-thiourea`,
 `PEG-3,2',2'-Di-p-PHENYLENEDIAMINE`. A plain `split(",")` gives a different
 answer from the parser on 52 rows and leaves a one-character fragment on 38 of
 them, putting a substance called `N` into the register.
 
 The rule adopted: a comma is part of a name when the fragment before it ends in
-a locant — a digit, a prime, or a lone letter — **and** the fragment after it
+a locant (a digit, a prime, or a lone letter) **and** the fragment after it
 begins like a locant continuation. Both halves are needed. `CI 77480,GOLD` ends
 in a digit and is a real separator; `DICHLOROMETHANE,4,6-DIMETHYL-PYRAN-2-ONE`
 starts with a digit and is also a real separator. It is a heuristic over an
@@ -126,8 +126,8 @@ undocumented column, so it is written down as one; its failure mode is a
 fragment that matches nothing, which is a missed match rather than a false one.
 
 **`csv.reader` must be given a file object, not a list of lines.** A quoted
-field may contain newlines and the annexes use them heavily — a wording cell is
-often ten lines. Feeding `csv.reader` the output of `splitlines()` glues those
+field may contain newlines and the annexes use them heavily, so a wording cell
+is often ten lines. Feeding `csv.reader` the output of `splitlines()` glues those
 lines together with nothing between them. It reported no error, and it turned
 `Contains selenium disulphide\nAvoid contact with eyes` into one run-on string,
 leaving 32 of the 38 extractable warning statements, 19 of them running on into
@@ -183,8 +183,8 @@ A `CI NNNNN` colourant printed before a non-colourant, in the declared section
 only. Article 19(1)(g) allows colourants in any order after the other
 ingredients.
 
-Restricted to bare colour index forms — plus the `CI NNNNN:N` lake suffix and
-the `Cl NNNNN` that scanners produce — because named Annex IV substances mostly
+Restricted to bare colour index forms, plus the `CI NNNNN:N` lake suffix and
+the `Cl NNNNN` that scanners produce, because named Annex IV substances mostly
 do more than one job. Titanium Dioxide is an Annex IV colourant, an Annex VI UV
 filter and an opacifier; its position says nothing about which.
 
@@ -201,7 +201,7 @@ than once rather than as thirty findings.
 
 ### 4. warning-wording
 
-Only with `--pack-text`. An Annex III–VI entry attaches a `Contains …` statement
+Only with `--pack-text`. An Annex III to VI entry attaches a `Contains …` statement
 to a matched ingredient and that statement is not in the supplied text.
 
 The narrowness is the whole reason it is worth running. The wording column mixes
