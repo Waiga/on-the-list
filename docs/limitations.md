@@ -31,7 +31,7 @@ valid INCI names.** There is no such public list: the INCI dictionary is
 published by the Personal Care Products Council and is proprietary.
 
 Aqua and Glycerin appear in none of the five annexes. Not because they are
-invalid names — because nothing restricts them.
+invalid names, but because nothing restricts them.
 
 So the tool reports ingredients no entry names as **not restricted by these
 annexes**, and that phrase is the whole of what it means. There is no `unknown`
@@ -41,7 +41,7 @@ ingredient of almost every product.
 
 ## What the prohibited check can and cannot see
 
-**It sees 314 of Annex II's 1,758 rows — 17.9%.** The other 1,444 rows identify
+**It sees 314 of Annex II's 1,758 rows, or 17.9%.** The other 1,444 rows identify
 their substance by chemical name, CAS number or EC number only, with no entry in
 the Common Ingredients Glossary. A label carries INCI names. Where the annex has
 no INCI name, there is nothing to compare, and the tool cannot tell you it
@@ -67,7 +67,7 @@ shown under *considered and not counted* instead.
 
 A name with a bracketed aside removed is a different case: `Titanium Dioxide
 (nano)` → `Titanium Dioxide` is still the name of the ingredient, and does
-match. Whether it is depends on how much of the name survives — the part outside
+match. Whether it is depends on how much of the name survives. The part outside
 the brackets must be at least half the words. `Citrus Limon (Lemon) Peel Oil`
 keeps four of five and is the name; `Styrene (Acrylate Copolymer)` keeps one of
 three and is a fragment, and it matched the styrene monomer in Annex II until
@@ -78,18 +78,18 @@ reported as prohibited and the other was not.
 **This narrowing is Annex II's alone.** The warning-wording check, the position
 check and the coverage count all accept a match found on a bracketed or
 slash-separated part of a printed name, and the finding does not say so. That
-is deliberate — it is the only way `CI 77891` is found inside `Titanium Dioxide
-(CI 77891)` — but it means "exact names only" is true of the prohibited check
-and not of the whole tool.
+is deliberate, because it is the only way `CI 77891` is found inside `Titanium
+Dioxide (CI 77891)`, but it means "exact names only" is true of the prohibited
+check and not of the whole tool.
 
 **A conditional entry is reported in its own group.** Many Annex II entries are
 prohibitions with a condition attached in the Commission's own wording:
 "except if the full refining history is known", "when used as a substance in
 hair dye products", "if it contains > 0,1 % w/w Butadiene", "(nano)". An
 ingredient list states none of those things. The tool detects the condition
-lexically — it looks for *except*, *unless*, *when used*, *other than*, *with
+lexically, looking for *except*, *unless*, *when used*, *other than*, *with
 the exception of*, *only if*, *only when*, *provided that* and a bare *if* in
-the entry's own chemical name — puts those findings after the unconditional
+the entry's own chemical name. It puts those findings after the unconditional
 ones, and prints the entry's wording so a reader can settle it. It never decides
 whether the condition is met.
 
@@ -116,7 +116,7 @@ descending order of weight, and adds that colourants other than hair colourants
 
 That is a permission, not a requirement. A colourant listed in weight order,
 early in the list, is not obviously out of place. Most lists put colourants
-last, so a colourant in the middle is worth a look — but the finding is a
+last, so a colourant in the middle is worth a look. The finding is still only a
 statement about where a name is printed, and the report says so in those words.
 
 Three further caveats, printed with every finding:
@@ -219,7 +219,7 @@ the right population, not that it is right.
 
 ## Where a finding can come from bad input rather than a bad label
 
-A quarter of the corpus — 4,288 of 16,635 labels — had at least one parsed
+A quarter of the corpus, 4,288 of 16,635 labels, had at least one parsed
 "ingredient" longer than any INCI name, meaning pack prose ended up inside the
 panel: a warning, a distributor address, a second product's list, a batch code.
 The tool says so in a limits line when it happens, and every count in that
@@ -265,7 +265,7 @@ are in `on_the_list/registry_manifest.py` and a test fails if a file and its
 hash disagree.
 
 The 16,635-label corpus used for the measurements is an Open Beauty Facts
-export. That database is ODbL 1.0 — attribution and share-alike — which is
+export. That database is ODbL 1.0, attribution and share-alike, which is
 incompatible with redistributing a filtered subset inside an MIT repository. The
 corpus is not included here; only the measurements are, with the export's own
 hash so the same file can be obtained. See `docs/corpus-manifest.md`.

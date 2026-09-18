@@ -26,11 +26,11 @@ reformatted or corrected on the way in. What is committed to
 
 | Annex | Rows | Bytes | SHA-256 |
 |---|---|---|---|
-| II — prohibited substances | 1,758 | 650,518 | `b7105a05bf724bb10cebaac3a3813b6146c3153ae1d07097d35bb1f73cd7283b` |
-| III — restricted substances | 381 | 296,566 | `82263556bab69a05b508b92e42dbeceec56f201a62ded2dd513198f6b029dd53` |
-| IV — permitted colourants | 154 | 47,319 | `bed185d597cec2e119b05eb8fb43adc07d3ddc1aa6ed0a2ee64308f790b5b84b` |
-| V — permitted preservatives | 58 | 31,439 | `e6db8b8b90d4082ec83bcc9d1fffcd8993b501d1e8116de057c772a347d10b12` |
-| VI — permitted UV filters | 34 | 19,161 | `b672b81a2a090b56bf09bbd554764a6f0c8dd8104761a0e87933e555df775774` |
+| II (prohibited substances) | 1,758 | 650,518 | `b7105a05bf724bb10cebaac3a3813b6146c3153ae1d07097d35bb1f73cd7283b` |
+| III (restricted substances) | 381 | 296,566 | `82263556bab69a05b508b92e42dbeceec56f201a62ded2dd513198f6b029dd53` |
+| IV (permitted colourants) | 154 | 47,319 | `bed185d597cec2e119b05eb8fb43adc07d3ddc1aa6ed0a2ee64308f790b5b84b` |
+| V (permitted preservatives) | 58 | 31,439 | `e6db8b8b90d4082ec83bcc9d1fffcd8993b501d1e8116de057c772a347d10b12` |
+| VI (permitted UV filters) | 34 | 19,161 | `b672b81a2a090b56bf09bbd554764a6f0c8dd8104761a0e87933e555df775774` |
 
 Check any of them:
 
@@ -124,8 +124,8 @@ incompatible with redistributing a filtered subset inside an MIT repository, so
 **the corpus is not vendored here**. Only the measurements are published.
 
 **What the corpus cannot measure.** It carries no field holding the text printed
-on a pack — `packaging_text` describes materials, not warnings — so the
-warning-wording check's accuracy is untested. See `docs/limitations.md`.
+on a pack, because `packaging_text` describes materials and not warnings, so
+the warning-wording check's accuracy is untested. See `docs/limitations.md`.
 
 ## The hand audits
 
