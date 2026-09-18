@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -13,6 +14,16 @@ from pathlib import Path
 from on_the_list import __version__
 from on_the_list.cli import EXIT_ERROR, EXIT_FINDINGS, EXIT_OK, main
 
+
+# The tests below assert facts about the register that ships inside this
+# package. ``load()`` with no argument deliberately prefers a register the user
+# downloaded with ``update-register``, so on any machine where that has ever
+# been run these tests were asserting against the wrong file and failing for a
+# reason that had nothing to do with the change under test. ``ON_THE_LIST_HOME``
+# exists for exactly this, as on_the_list/paths.py says. Pointing it at an empty
+# directory makes every run here use the shipped copy, hash check and all.
+_ISOLATED_HOME = tempfile.mkdtemp(prefix="on-the-list-tests-")
+os.environ["ON_THE_LIST_HOME"] = _ISOLATED_HOME
 
 class Runner:
     """Run the CLI and capture what it wrote, without spawning anything."""
