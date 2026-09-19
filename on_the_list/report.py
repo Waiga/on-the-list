@@ -89,7 +89,7 @@ def _headline(report: Report) -> str:
 
 
 _QUALIFIED_BLURB = (
-    "These matched an Annex II entry whose own wording carries a condition -- "
+    "These matched an Annex II entry whose own wording carries a condition: "
     "\"except if the full refining history is known\", \"when used as a "
     "substance in hair dye products\", \"(nano)\". An ingredient list states "
     "none of those things, so this tool cannot tell whether the condition is "
@@ -159,7 +159,7 @@ def entry_lines(report: Report) -> list[str]:
         entries = [m.entry for m in report.matches if m.ingredient is match.ingredient]
         for entry in entries:
             what = _ANNEX_IS.get(entry.annex, entry.annex)
-            line = f"  {match.ingredient.raw} — {entry.citation}, {what}"
+            line = f"  {match.ingredient.raw}: {entry.citation}, {what}"
             if entry.annex == "II" and entry.qualifier:
                 line += f", with a condition ('{entry.qualifier}')"
             lines.append(line)
@@ -175,7 +175,7 @@ def entry_lines(report: Report) -> list[str]:
 
 
 def render_text(report: Report) -> str:
-    out: list[str] = [f"on-the-list {__version__} — {report.source or 'label'}"]
+    out: list[str] = [f"on-the-list {__version__}: {report.source or 'label'}"]
     out.append(report.register.line())
     out.append("")
     out.extend(_wrap(_headline(report)))
@@ -198,7 +198,7 @@ def render_text(report: Report) -> str:
             out.append("")
         if qualified:
             if plain:
-                out.append("  — and where the annex entry sets a condition —")
+                out.append("  AND WHERE THE ANNEX ENTRY SETS A CONDITION")
             out.extend(_wrap(_QUALIFIED_BLURB, "  "))
             out.append("")
             for finding in qualified:
@@ -260,14 +260,14 @@ def render_text(report: Report) -> str:
     out.append("CHECKS")
     for run in report.checks:
         if run.ran:
-            out.append(f"  ran      {run.name} — {run.findings} found")
+            out.append(f"  ran      {run.name}: {run.findings} found")
         else:
             # Wrapped like everything else. A long reason used to run off the
             # right of a report every other line of which stops at 78 columns.
             # The reason is wrapped on its own so that the two-space column
             # after "not run" survives -- _wrap splits on whitespace and would
             # otherwise close it up.
-            prefix = f"  not run  {run.name} — "
+            prefix = f"  not run  {run.name}: "
             wrapped = _wrap(run.reason, " " * len(prefix))
             wrapped[0] = prefix + wrapped[0].strip()
             out.extend(wrapped)
@@ -285,7 +285,7 @@ def render_text(report: Report) -> str:
 
 
 def render_markdown(report: Report) -> str:
-    out = [f"# on-the-list {__version__} — {report.source or 'label'}", ""]
+    out = [f"# on-the-list {__version__}: {report.source or 'label'}", ""]
     out.append(f"*{report.register.line()}*")
     out.append("")
     out.append(_headline(report))
@@ -327,7 +327,7 @@ def render_markdown(report: Report) -> str:
         )
         out.append("")
         for item in report.considered:
-            out.append(f"- **{item.ingredient.raw}** — {item.reason}")
+            out.append(f"- **{item.ingredient.raw}**: {item.reason}")
         out.append("")
     if report.parsed:
         out.append("## Coverage")
@@ -342,7 +342,7 @@ def render_markdown(report: Report) -> str:
     out.append("")
     for run in report.checks:
         state = f"ran, {run.findings} found" if run.ran else f"not run: {run.reason}"
-        out.append(f"- `{run.name}` — {state}")
+        out.append(f"- `{run.name}`: {state}")
     out.append("")
     out.append(
         "Nothing here is a statement that this product is compliant, safe, "

@@ -81,7 +81,7 @@ def analyse(
         limits.append(
             "This ingredient field carries "
             f"{len(headings)} section "
-            f"{'heading' if len(headings) == 1 else 'headings'} -- "
+            f"{'heading' if len(headings) == 1 else 'headings'}: "
             + ", ".join(f"'{h}'" for h in headings[:4])
             + (" and others" if len(headings) > 4 else "")
             + ". A multi-component pack declares one list per component in the "
@@ -134,7 +134,7 @@ def analyse(
         limits.append(
             f"{len(prose)} of the {len(items)} entries read are longer than "
             "any INCI name, so this panel almost certainly contains pack prose "
-            "-- a warning, a distributor address, a second product's list -- "
+            "(a warning, a distributor address, a second product's list) "
             "parsed as ingredients. Every count below is affected. The first "
             f"is: {prose[0].raw[:90]}"
         )
