@@ -154,8 +154,8 @@ def check_prohibited(
                     entry=match.entry,
                     reason=(
                         f"{match.entry.citation} is about the nanomaterial "
-                        f"form -- its own name reads "
-                        f"'{' '.join(match.entry.chemical_name.split())}' -- "
+                        f"form (its own name reads "
+                        f"'{' '.join(match.entry.chemical_name.split())}') "
                         "while listing the ordinary INCI name beside it. This "
                         "label does not say nano, so the entry is not about "
                         "what is printed here."
@@ -479,8 +479,8 @@ def run(
         record("prohibited", produced)
 
     _MANY = (
-        "the ingredient field holds more than one section -- a second "
-        "component's list, or a pack panel -- so the order of what was parsed "
+        "the ingredient field holds more than one section (a second "
+        "component's list, or a pack panel), so the order of what was parsed "
         "is not one product's ingredient order. See the limits above."
     )
     if "colourant-order" in skip:

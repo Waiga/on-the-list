@@ -14,9 +14,8 @@ with the hand audits and their limits, is written up in
 ```
 $ on-the-list examples/shade-stick.txt
 
-on-the-list 0.1.3 — examples/shade-stick.txt
-CosIng annexes II-VI, Commission last update 28/08/2026, 1913 distinct names,
-read from the copy shipped with this package
+on-the-list 0.1.4: examples/shade-stick.txt
+CosIng annexes II-VI, Commission last update 28/08/2026, 1913 distinct names, read from the copy shipped with this package
 
 10 ingredients read. 2 prohibited, 1 colourant order, 1 repeated entry.
 
@@ -153,14 +152,11 @@ check it:
 
 ```bash
 $ on-the-list register
-CosIng annexes II-VI, Commission last update 28/08/2026, 1913 distinct names,
-read from the copy shipped with this package
+CosIng annexes II-VI, Commission last update 28/08/2026, 1913 distinct names, read from the copy shipped with this package
 
-CosIng, © European Union, 1995-2026. Annexes II to VI of Regulation (EC)
-No 1223/2009, retrieved from the European Commission CosIng API. Reused under
-Commission Decision 2011/833/EU (CC BY 4.0). Unmodified.
+CosIng, © European Union, 1995-2026. Annexes II to VI of Regulation (EC) No 1223/2009, retrieved from the European Commission CosIng API. Reused under Commission Decision 2011/833/EU (CC BY 4.0). Unmodified.
 
-Annex II — list of substances prohibited in cosmetic products
+Annex II: list of substances prohibited in cosmetic products
   1758 entries, Commission last update 28/08/2026
   sha256 b7105a05bf724bb10cebaac3a3813b6146c3153ae1d07097d35bb1f73cd7283b
   https://api.tech.ec.europa.eu/cosing20/1.0/api/annexes/II/export-csv

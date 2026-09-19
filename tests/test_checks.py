@@ -6,6 +6,7 @@ fails says which claim broke.
 
 from __future__ import annotations
 
+import re
 import unittest
 
 from on_the_list.analyse import analyse
@@ -357,3 +358,73 @@ class TheReportSaysWhichAnnexEntriesNameEachIngredient(unittest.TestCase):
         report = run("Aqua, CI 77491, Glycerin")
         found = checks_of(report, "colourant-order")
         self.assertIn("Annex IV, entry 135", found[0].summary)
+
+
+class NoPunctuationDashReachesTheReader(unittest.TestCase):
+    """The report is written to be pasted into an email, so its punctuation is
+    not a private matter of style.
+
+    Until 0.1.4 every report printed em dashes: nine of them in a single
+    default run, carried into the Markdown export and from there into whatever
+    the reader pasted it into. Nothing in the suite noticed, because nothing in
+    the suite looked. This is that test.
+
+    A hyphen inside a compound word, inside a chemical name, or opening a
+    Markdown list item is spelling or syntax, not punctuation, and is left
+    alone.
+    """
+
+    #: A line-opening "-" is a Markdown list marker. Blanked before counting.
+    BULLET = re.compile(r"^(\s*)-(\s)", re.M)
+
+    FORMS = {
+        "em dash": "\u2014",
+        "en dash": "\u2013",
+        "figure dash": "\u2012",
+        "horizontal bar": "\u2015",
+        "minus sign": "\u2212",
+    }
+
+    def _prose(self, text: str) -> str:
+        return self.BULLET.sub(r"\1 \2", text)
+
+    def _assert_clean(self, prose: str, **context) -> None:
+        for name, char in self.FORMS.items():
+            with self.subTest(form=name, **context):
+                self.assertNotIn(char, prose)
+        with self.subTest(form="spaced hyphen", **context):
+            self.assertIsNone(re.search(r"(?<= )-(?= )", prose))
+        with self.subTest(form="spaced double hyphen", **context):
+            self.assertIsNone(re.search(r"(?<= )--(?= )", prose))
+
+    def test_no_dash_character_is_printed_by_any_renderer(self):
+        from on_the_list.report import render_json, render_markdown, render_text
+
+        labels = [
+            "Aqua, Formaldehyde, Butylphenyl Methylpropional",
+            "Aqua, Petrolatum, CI 74160, Glycerin, Glycerin",
+            "Aqua, Styrene/Acrylates Copolymer, Chromium (CI 77288)",
+            "MASQUE: Aqua, Glycerin. GEL: Aqua, Parfum",
+            "Notarealingredient, Anotherinventedname, Aqua",
+        ]
+        for label in labels:
+            report = run(label, pack_text="A product. 50 ml.")
+            for render in (render_text, render_markdown, render_json):
+                self._assert_clean(
+                    self._prose(render(report)),
+                    label=label[:24],
+                    render=render.__name__,
+                )
+
+    def test_the_register_description_prints_no_dash(self):
+        from on_the_list.register import describe
+
+        self._assert_clean(self._prose("\n".join(describe(REGISTER))))
+
+    def test_the_parser_still_accepts_dashes_in_the_label_it_is_given(self):
+        # The counterpart to the rule above: dashes are banned in what the tool
+        # WRITES, never in what it READS. A label that separates a name from a
+        # qualifier with a dash must still parse.
+        report = run("Aqua \u2014 Glycerin \u2013 Parfum, Petrolatum")
+        self.assertTrue(report.ingredients)
+        self.assertTrue(any("Petrolatum" in i.raw for i in report.ingredients))

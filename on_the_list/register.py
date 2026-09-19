@@ -142,7 +142,7 @@ def describe(register: Register) -> list[str]:
     for annex in manifest.ORDER:
         last_update, digest, rows = register.info.annexes[annex]
         title = str(manifest.ANNEXES[annex]["title"])
-        lines.append(f"Annex {annex} — {title.lower()}")
+        lines.append(f"Annex {annex}: {title.lower()}")
         lines.append(f"  {rows} entries, Commission last update {last_update}")
         lines.append(f"  sha256 {digest}")
         lines.append(
