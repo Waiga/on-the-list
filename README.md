@@ -394,3 +394,8 @@ Commission Decision 2011/833/EU; the Commission's legal notice states that
 content it owns is licensed under CC BY 4.0.
 
 Nothing in this repository is legal or regulatory advice.
+
+## Elsewhere
+
+The rest of these tools, and the writing about what real files did to them, is at
+[waiga.github.io](https://waiga.github.io).
